@@ -33,6 +33,38 @@ namespace tofu
                     s1 * v1[2] + s2 * v2[2]};
         }
 
+        // Puntos de un plano
+        constexpr std::array<float, 12> plane_vert = {
+             1.f, 1.f, 0.f,
+            -1.f, 1.f, 0.f,
+            -1.f,-1.f, 0.f,
+             1.f,-1.f, 0.f
+        };
+        constexpr std::array<ui32, 6> plane_ind = {
+            0, 1, 2,
+            0, 2, 3
+        };
+
+        // Puntos de un cubo
+        constexpr std::array<float, 24> cube_vert = {
+             1.f, 1.f, 1.f,
+             1.f, 1.f,-1.f,
+            -1.f, 1.f,-1.f,
+            -1.f, 1.f, 1.f,
+             1.f,-1.f, 1.f,
+             1.f,-1.f,-1.f,
+            -1.f,-1.f,-1.f,
+            -1.f,-1.f, 1.f
+        };
+        constexpr std::array<ui32, 36> cube_ind = {
+            0, 2, 1, 0, 3, 2, // Arriba
+            4, 5, 6, 4, 6, 7, // Abajo
+            0, 1, 5, 0, 5, 4, // Frente
+            3, 6, 2, 3, 7, 6, // Atrás
+            0, 7, 3, 0, 4, 7, // Izquierda
+            1, 2, 6, 1, 6, 5  // Derecha
+        };
+
         // Puntos de un octaedro
         constexpr std::array<float, 24> oct_vert = {
              0.f, 1.f, 0.f, // Arriba
@@ -46,9 +78,21 @@ namespace tofu
 
     namespace geometria
     {
+        // Plano
+        inline void plano(std::vector<float>& vertices, std::vector<ui32>& indices) {
+            vertices = {detail::plane_vert.begin(), detail::plane_vert.end()};
+            indices = {detail::plane_ind.begin(), detail::plane_ind.end()};
+        }
+
+        // Cubo
+        inline void cubo(std::vector<float>& vertices, std::vector<ui32>& indices) {
+            vertices = {detail::cube_vert.begin(), detail::cube_vert.end()};
+            indices = {detail::cube_ind.begin(), detail::cube_ind.end()};
+        }
+
         // Esfera a partir de octaedro
         // Creamos las subdivisiones dividiendo cada arista n veces, no como se hace tradicionalmente, para tener más control sobre la división
-        inline void esferaOctaedro(ui32 n, std::vector<float>& vertices, std::vector<ui32>& indices) {
+        inline void esferaOct(ui32 n, std::vector<float>& vertices, std::vector<ui32>& indices) {
             if (n < 1) {
                 log::error("El nivel de subdivisión debe ser mayor o igual a 1");
                 return;
@@ -102,7 +146,7 @@ namespace tofu
             // Recorremos horizontalmente los niveles
             ui32 vert_acc = 1;
             ui32 vert_anterior = 0;
-            I ind = {0, 0, 0};
+            I ind = {0, 0, 0}, ind_ccw = {0, 0, 0};
             for (ui32 i = 1; i < n+1; i++) {
                 ui32 tri = (2 * (i-1) + 1) * 4;
                 ui32 vert = i * 4;
@@ -117,8 +161,11 @@ namespace tofu
                 for (ui32 j = 0; j < tri; j++) {
                     //log::info("{} - {} {} {}", j, ind[0], ind[1], ind[2]);
 
-                    // Insertamos los índices desde el principio
-                    indices.insert(indices.end(), ind.begin(), ind.end());
+                    // Corregimos e insertamos los índices
+                    ind_ccw = ind;
+                    if (ind[0] > ind[1])
+                        std::swap(ind_ccw[0], ind_ccw[1]);
+                    indices.insert(indices.end(), ind_ccw.begin(), ind_ccw.end());
 
                     // Actualizamos los índices
                     if ((j+1) % (tri/4) == 0) { // Caso borde
@@ -158,8 +205,11 @@ namespace tofu
                 for (ui32 j = 0; j < tri; j++) {
                     //log::info("{} - {} {} {}", j, ind[0], ind[1], ind[2]);
 
-                    // Insertamos los índices desde el principio
-                    indices.insert(indices.end(), ind.begin(), ind.end());
+                    // Corregimos e insertamos los índices
+                    ind_ccw = ind;
+                    if (ind[0] < ind[1])
+                        std::swap(ind_ccw[0], ind_ccw[1]);
+                    indices.insert(indices.end(), ind_ccw.begin(), ind_ccw.end());
 
                     // Actualizamos los índices
                     if ((j+1) % (tri/4) == 0) { // Caso borde
@@ -181,7 +231,7 @@ namespace tofu
         }
 
         // Esfera de fibonacci (para hacer triángulos se necesitaría el algoritmo de Delunay)
-        inline void esferaFibonacci(ui32 n, std::vector<float>& vertices) {
+        inline void esferaFib(ui32 n, std::vector<float>& vertices) {
             vertices.clear();
             vertices.reserve(n * 3);
 

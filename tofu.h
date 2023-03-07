@@ -7,6 +7,8 @@
 
 #pragma once
 
+// Librerías principales
+
 #include "tipos.h"
 #include "debug.h"
 #include "window.h"

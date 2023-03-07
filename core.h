@@ -8,9 +8,6 @@
 
 namespace tofu
 {
-    // Referencia a los datos de OpenGL
-    inline std::unique_ptr<GL> gl;
-
     // Inicializar OpenGL
     inline void initGL(GLFWwindow* win) {
         // Creamos la estructura de datos de OpenGL
@@ -29,7 +26,7 @@ namespace tofu
 
         // Profundidad
         glEnable(GL_DEPTH_TEST);
-        //glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
 
@@ -63,7 +60,8 @@ namespace tofu
         glDeleteVertexArrays(1, &gl->VAO);
         glDeleteBuffers(1, &gl->VBO);
         glDeleteBuffers(1, &gl->EBO);
-        glDeleteProgram(gl->pid);
+        for (auto& [n, s] : gl->shaders)
+            glDeleteProgram(s.pid);
         glfwTerminate();
     }
 }
