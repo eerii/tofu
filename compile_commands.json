@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang++",
+      "-g",
+      "--std=c++17",
+      "-I.",
+      "-Ilib/glad",
+      "-Ilib/tofu",
+      "-I/usr/local/include/GLFW",
+      "-c",
+      "-o",
+      "bin/obj/main.o",
+      "main.cpp"
+    ],
+    "directory": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Estudios/10 Informatica Primero/Computacion Grafica/Practicas/P2 Modelo 3D/Cuadrado",
+    "file": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Estudios/10 Informatica Primero/Computacion Grafica/Practicas/P2 Modelo 3D/Cuadrado/main.cpp",
+    "output": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Estudios/10 Informatica Primero/Computacion Grafica/Practicas/P2 Modelo 3D/Cuadrado/bin/obj/main.o"
+  }
+]
