@@ -2,6 +2,7 @@
 #pragma once
 
 #include "debug.h"
+#include "input.h"
 
 namespace tofu
 {
@@ -23,13 +24,20 @@ namespace tofu
         }
         glfwMakeContextCurrent(win);
 
+        // Input callback
+        glfwSetKeyCallback(win, input::keyCallback);
+        glfwSetCursorPosCallback(win, input::mouseCallback);
+
+        // Ratón desactivado para tener movimiento ilimitado en la cámara
+        glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
         return win;
     }
    
     // Procesa los eventos de GLFW
     // Debe ser llamado en cada iteración del bucle principal
     inline void procesarEventos(GLFWwindow* window) {
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-            glfwSetWindowShouldClose(window, true);
+        if (gl->io.teclas[GLFW_KEY_ESCAPE].presionada)
+            glfwSetWindowShouldClose(window, true); 
     }
 }

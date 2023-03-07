@@ -32,14 +32,34 @@ namespace tofu
         std::unordered_map<str, ui32> uniforms;
     };
 
+    // Estructura de datos de entrada
+    struct Key {
+        bool presionada;
+        bool liberada;
+        bool mantenida;
+    };
+    struct Mouse {
+        double x, y;
+        double xoff, yoff;
+    };
+    struct Input {
+        std::unordered_map<int, Key> teclas;
+        Mouse mouse;
+    };
+
     // Estructura de datos de OpenGL
     struct GL {
         GLFWwindow* win;
+        Input io;
+
         ui32 VAO;
         ui32 VBO;
         ui32 EBO;
 
         std::unordered_map<str, Shader> shaders;
+
+        glm::mat4 view;
+        glm::mat4 proj;
     };
 
     // Referencia a los datos de OpenGL

@@ -40,7 +40,7 @@ namespace tofu
     using update_fun_t = std::function<void()>;
     inline bool update(update_fun_t render = []{}) {
         // Procesar la entrada
-        procesarEventos(gl->win);
+        procesarEventos(gl->win); 
 
         // Limpiar la pantalla antes de seguir
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -50,6 +50,11 @@ namespace tofu
 
         // Cambiar los buffers y presentar a pantalla
         glfwSwapBuffers(gl->win);
+        for (auto& [c, t] : gl->io.teclas) {
+            t.liberada = false;
+            t.presionada = false;
+        }
+        gl->io.mouse.xoff = 0; gl->io.mouse.yoff = 0;
         glfwPollEvents();
 
         return not glfwWindowShouldClose(gl->win);

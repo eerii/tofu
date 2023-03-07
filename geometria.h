@@ -41,8 +41,8 @@ namespace tofu
              1.f,-1.f, 0.f
         };
         constexpr std::array<ui32, 6> plane_ind = {
-            0, 1, 2,
-            0, 2, 3
+            0, 2, 1,
+            0, 3, 2
         };
 
         // Puntos de un cubo
