@@ -9,10 +9,10 @@
 namespace tofu
 {
     // Inicializar OpenGL
-    inline void initGL(GLFWwindow* win) {
+    inline void initGL(ui16 w, ui16 h, str nombre) {
         // Creamos la estructura de datos de OpenGL
         gl = std::make_unique<GL>();
-        gl->win = win;
+        gl->win = crearContexto(w, h, "Sistema Solar");
 
         // Cargar OpenGL con GLAD
         if (not gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -34,6 +34,10 @@ namespace tofu
         glGenVertexArrays(1, &gl->VAO);
         glGenBuffers(1, &gl->VBO);
         glGenBuffers(1, &gl->EBO);
+
+        // Matriz de perspectiva
+        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 100.f);
+        gl->proj[1][1] *= -1;
     }
 
     // Bucle de la aplicación

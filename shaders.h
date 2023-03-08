@@ -132,6 +132,8 @@ namespace tofu
                 glUniform4f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z, valor.w);
             } else if constexpr (std::is_same_v<T, glm::mat4>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], 1, GL_FALSE, glm::value_ptr(valor));
+            } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
+                glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
             } else {
                 log::error("No se puede asignar el uniform '{}' en la shader '{}'", nombre, shader);
             }
