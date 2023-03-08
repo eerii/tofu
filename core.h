@@ -38,6 +38,8 @@ namespace tofu
         // Matriz de perspectiva
         gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 100.f);
         gl->proj[1][1] *= -1;
+
+        debug::gl();
     }
 
     // Bucle de la aplicación
@@ -61,6 +63,7 @@ namespace tofu
         gl->io.mouse.xoff = 0; gl->io.mouse.yoff = 0;
         glfwPollEvents();
 
+        debug::gl();
         return not glfwWindowShouldClose(gl->win);
     }
 
@@ -69,8 +72,11 @@ namespace tofu
         glDeleteVertexArrays(1, &gl->VAO);
         glDeleteBuffers(1, &gl->VBO);
         glDeleteBuffers(1, &gl->EBO);
+
         for (auto& [n, s] : gl->shaders)
             glDeleteProgram(s.pid);
+
+        debug::gl();
         glfwTerminate();
     }
 }

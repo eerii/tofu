@@ -47,6 +47,8 @@ namespace tofu
                 glGetShaderInfoLog(id, log_len, NULL, &error[0]);
                 log::warn("No se pudo compilar el shader: {}", error);
             }
+
+            debug::gl();
         }
 
         inline ui32 cargarShader(str vert, str frag) {
@@ -87,6 +89,7 @@ namespace tofu
             // Cargamos el programa por defecto
             glUseProgram(pid);
 
+            debug::gl();
             return pid;
         }
     }
@@ -99,7 +102,6 @@ namespace tofu
                 .pid = detail::cargarShader(nombre + ".vert", nombre + ".frag")
             };
             gl->shaders[nombre] = s;
-            log::info("Shader '{}' cargada", nombre);
         }
 
         // Actualizar el valor de un uniform en la shader specificada
@@ -112,10 +114,8 @@ namespace tofu
 
             // Si no hemos registrado el uniform, obtenemos su localización
             glUseProgram(gl->shaders[shader].pid);
-            if (not gl->shaders[shader].uniforms.count(nombre)) {
+            if (not gl->shaders[shader].uniforms.count(nombre))
                 gl->shaders[shader].uniforms[nombre] = glGetUniformLocation(gl->shaders[shader].pid, nombre.c_str());
-                log::info("Uniform '{}' en shader '{}' ({})", nombre, shader, gl->shaders[shader].uniforms[nombre]);
-            }
 
             // Asignamos el uniform con el tipo correcto
             if constexpr (std::is_same_v<T, int>) {
@@ -132,12 +132,25 @@ namespace tofu
                 glUniform4f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z, valor.w);
             } else if constexpr (std::is_same_v<T, glm::mat4>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], 1, GL_FALSE, glm::value_ptr(valor));
+            } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+                glUniform1iv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+            } else if constexpr (std::is_same_v<T, std::vector<ui32>>) {
+                glUniform1uiv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+            } else if constexpr (std::is_same_v<T, std::vector<float>>) {
+                glUniform1fv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+            } else if constexpr (std::is_same_v<T, std::vector<glm::vec2>>) {
+                glUniform2fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+            } else if constexpr (std::is_same_v<T, std::vector<glm::vec3>>) {
+                glUniform3fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+            } else if constexpr (std::is_same_v<T, std::vector<glm::vec4>>) {
+                glUniform4fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
             } else {
                 log::error("No se puede asignar el uniform '{}' en la shader '{}'", nombre, shader);
             }
+
+            debug::gl();
         }
     }
-    
 }

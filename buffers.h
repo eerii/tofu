@@ -17,6 +17,8 @@ namespace tofu
             glEnableVertexAttribArray(i);
             offset += atributos[i];
         }
+
+        debug::gl();
     }
 
     // Cargar los datos de los vértices en la GPU
@@ -25,8 +27,11 @@ namespace tofu
 
         glBindBuffer(GL_ARRAY_BUFFER, gl->VBO);
         glBufferData(GL_ARRAY_BUFFER, vertices.first.size() * sizeof(float), vertices.first.data(), GL_STATIC_DRAW);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl->EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertices.second.size() * sizeof(ui32), vertices.second.data(), GL_STATIC_DRAW);
+        
+        debug::gl();
 
         configurarVAO(gl->VAO, atributos);
     }

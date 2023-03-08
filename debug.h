@@ -6,6 +6,13 @@
 
 #include "tipos.h"
 
+#ifndef GL_STACK_OVERFLOW
+#define GL_STACK_OVERFLOW 0x0503
+#endif
+#ifndef GL_STACK_UNDERFLOW
+#define GL_STACK_UNDERFLOW 0x0504
+#endif
+
 namespace tofu {
     // Formatear strings
 
@@ -26,6 +33,26 @@ namespace tofu {
             fmt[N - 1 - sizeof...(A)] = to_string(arg);
             format_args(fmt, std::forward<A>(other)...);
         }
+
+        struct source_location {
+            static constexpr auto current(
+                #if (__has_builtin(__builtin_FILE) && __has_builtin(__builtin_LINE))
+                    const char *file = __builtin_FILE(),
+                    int line = __builtin_LINE()
+                #else
+                    const char *file = "no file",
+                    int line = 0
+                #endif
+            ) noexcept {
+                return source_location{file, line};
+            }
+
+            constexpr auto file_name() const noexcept { return file_; }
+            constexpr auto line() const noexcept { return line_; }
+
+            const char* file_;
+            int line_;
+        };
     }
 
     template <typename ... A>
@@ -108,6 +135,7 @@ namespace tofu {
         inline std::ostream& green(std::ostream& os) { return os << "\e[32m"; }
         inline std::ostream& yellow(std::ostream& os) { return os << "\e[33m"; }
         inline std::ostream& blue(std::ostream& os) { return os << "\e[34m"; }
+        inline std::ostream& magenta(std::ostream& os) { return os << "\e[35m"; }
         inline std::ostream& reset(std::ostream& os) { return os << "\033[0m"; }
     }
 
@@ -123,5 +151,25 @@ namespace tofu {
 
         template <typename ... T>
         inline void error(const str& fmt, T&& ... args) { std::cerr << color::bold_on << color::red << "[ERR]: " << color::reset << color::bold_off << format(fmt, std::forward<T>(args)...) << std::endl; }
+    }
+
+    namespace debug
+    {
+        inline void gl(const detail::source_location &location = detail::source_location::current()) {
+            GLenum err;
+            str err_type = "UNKNOWN";
+            while ((err = glGetError()) != GL_NO_ERROR) {
+                switch (err) {
+                    case GL_INVALID_ENUM: err_type = "INVALID_ENUM"; break;
+                    case GL_INVALID_VALUE: err_type = "INVALID_VALUE"; break;
+                    case GL_INVALID_OPERATION: err_type = "INVALID_OPERATION"; break;
+                    case GL_INVALID_FRAMEBUFFER_OPERATION: err_type = "INVALID_FRAMEBUFFER_OPERATION"; break;
+                    case GL_OUT_OF_MEMORY: err_type = "OUT_OF_MEMORY"; break;
+                    case GL_STACK_UNDERFLOW: err_type = "STACK_UNDERFLOW"; break;
+                    case GL_STACK_OVERFLOW: err_type = "STACK_OVERFLOW"; break;
+                }
+                std::cerr << color::bold_on << color::magenta << "[GL!]: " << color::reset << color::bold_off << err_type << " in " << location.file_name() << ":" << location.line() << std::endl;
+            }
+        }
     }
 }
