@@ -55,6 +55,13 @@ namespace tofu
         ui32 tam;
         ui32 bytes;
     };
+    struct Texture {
+        ui32 texture;
+    };
+    struct TexBuffer {
+        Buffer b;
+        Texture t;
+    };
 
     // Posición relativa en el vector de vértices/indices
     struct PosVertices {

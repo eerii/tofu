@@ -106,7 +106,7 @@ namespace tofu
 
         // Actualizar el valor de un uniform en la shader specificada
         template <typename T>
-        inline void uniform(str shader, str nombre, T valor) {
+        void uniform(str shader, str nombre, T valor) {
             if (not gl->shaders.count(shader)) {
                 log::error("No existe el shader especificado: {}", shader);
                 return;
@@ -148,6 +148,11 @@ namespace tofu
                 glUniform4iv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
+            } else if constexpr (std::is_same_v<T, TexBuffer>) {
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_BUFFER, valor.t.texture);
+                glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, valor.b.buffer);
+                glUniform1i(gl->shaders[shader].uniforms[nombre], 0);
             } else {
                 log::error("No se puede asignar el uniform '{}' en la shader '{}'", nombre, shader);
             }

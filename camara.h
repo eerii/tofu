@@ -5,7 +5,7 @@
 
 // ---
 
-glm::vec3 cam_pos = glm::vec3(0.f, 0.f, 4.f);
+glm::vec3 cam_pos = glm::vec3(0.f, 0.f, 8.f);
 glm::vec3 cam_vel = glm::vec3(0.f);
 
 float yaw = 0.f;
