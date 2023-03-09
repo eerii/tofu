@@ -102,22 +102,42 @@ namespace tofu
                 .pid = detail::cargarShader(nombre + ".vert", nombre + ".frag")
             };
             gl->shaders[nombre] = s;
+            glUseProgram(0);
+        }
+
+        // Usar una shader
+        inline void usar(str nombre = "") {
+            if (gl->shader_actual == nombre)
+                return;
+            
+            gl->shader_actual = nombre;
+            if (nombre.empty()) {
+                glUseProgram(0);
+                return;
+            }
+
+            if (not gl->shaders.count(nombre)) {
+                log::error("No existe el shader especificado: {}", nombre);
+                return;
+            }
+            glUseProgram(gl->shaders[nombre].pid);
+            debug::gl();
         }
 
         // Actualizar el valor de un uniform en la shader specificada
         template <typename T>
-        void uniform(str shader, str nombre, T valor) {
-            if (not gl->shaders.count(shader)) {
-                log::error("No existe el shader especificado: {}", shader);
+        void uniform(str nombre, T valor) {
+            str& shader = gl->shader_actual;
+            if (shader.empty()) {
+                log::error("No se ha especificado una shader para actualizar el uniform: '{}'", nombre);
                 return;
             }
 
             // Si no hemos registrado el uniform, obtenemos su localización
-            glUseProgram(gl->shaders[shader].pid);
             if (not gl->shaders[shader].uniforms.count(nombre))
                 gl->shaders[shader].uniforms[nombre] = glGetUniformLocation(gl->shaders[shader].pid, nombre.c_str());
 
-            // Asignamos el uniform con el tipo correcto
+            // Uniforms básicos
             if constexpr (std::is_same_v<T, int>) {
                 glUniform1i(gl->shaders[shader].uniforms[nombre], valor);
             } else if constexpr (std::is_same_v<T, ui32>) {
@@ -132,7 +152,10 @@ namespace tofu
                 glUniform4f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z, valor.w);
             } else if constexpr (std::is_same_v<T, glm::mat4>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], 1, GL_FALSE, glm::value_ptr(valor));
-            } else if constexpr (std::is_same_v<T, std::vector<int>>) {
+            } 
+
+            // Arrays de uniforms
+            else if constexpr (std::is_same_v<T, std::vector<int>>) {
                 glUniform1iv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
             } else if constexpr (std::is_same_v<T, std::vector<ui32>>) {
                 glUniform1uiv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
@@ -148,12 +171,19 @@ namespace tofu
                 glUniform4iv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
-            } else if constexpr (std::is_same_v<T, TexBuffer>) {
-                glActiveTexture(GL_TEXTURE0);
+            } 
+
+            // Texture buffers
+            else if constexpr (std::is_same_v<T, TexBuffer>) {
+                static int n = TEX_BUFFER_OFF;
+                glActiveTexture(GL_TEXTURE0 + n);
                 glBindTexture(GL_TEXTURE_BUFFER, valor.t.texture);
                 glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, valor.b.buffer);
-                glUniform1i(gl->shaders[shader].uniforms[nombre], 0);
-            } else {
+                glUniform1i(gl->shaders[shader].uniforms[nombre], n++);
+            } 
+
+            // Tipo no soportado
+            else {
                 log::error("No se puede asignar el uniform '{}' en la shader '{}'", nombre, shader);
             }
 

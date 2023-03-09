@@ -6,6 +6,8 @@
 
 namespace tofu
 {
+    void windowSizeCallback(GLFWwindow* win, int w, int h);
+
     // Crea una ventana con GLFW e inicializa un contexto de OpenGL 3.3 core
     inline GLFWwindow* crearContexto(ui16 w, ui16 h, str nombre) {
         // Iniciar GLFW
@@ -24,20 +26,25 @@ namespace tofu
         }
         glfwMakeContextCurrent(win);
 
-        // Input callback
+        // Callbacks
         glfwSetKeyCallback(win, input::keyCallback);
         glfwSetCursorPosCallback(win, input::mouseCallback);
+        glfwSetWindowSizeCallback(win, windowSizeCallback);
 
         // Ratón desactivado para tener movimiento ilimitado en la cámara
-        glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED); 
+        glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         return win;
     }
-   
-    // Procesa los eventos de GLFW
-    // Debe ser llamado en cada iteración del bucle principal
-    inline void procesarEventos(GLFWwindow* window) {
-        if (gl->io.teclas[GLFW_KEY_ESCAPE].presionada)
-            glfwSetWindowShouldClose(window, true); 
+
+    // Ajustar perspectiva
+    inline void ajustarPerspectiva(int w, int h) {
+        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 1000.f);
+        gl->proj[1][1] *= -1;
+    }
+
+    // Callback de cambio de tamaño de ventana
+    inline void windowSizeCallback(GLFWwindow* win, int w, int h) {
+        ajustarPerspectiva(w, h);
     }
 }

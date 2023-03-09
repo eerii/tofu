@@ -5,6 +5,7 @@
 
 #include "debug.h"
 #include "window.h"
+#include "shaders.h"
 
 namespace tofu
 {
@@ -30,9 +31,12 @@ namespace tofu
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
 
+        // Transparencia
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         // Matriz de perspectiva
-        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 1000.f);
-        gl->proj[1][1] *= -1;
+        ajustarPerspectiva(w, h);
 
         debug::gl();
     }
@@ -40,17 +44,17 @@ namespace tofu
     // Bucle de la aplicación
     using update_fun_t = std::function<void()>;
     inline bool update(update_fun_t render = []{}) {
-        // Procesar la entrada
-        procesarEventos(gl->win); 
-
         // Limpiar la pantalla antes de seguir
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        gl->instancia_base = 0;
 
         // Llamar a los comandos de renderizados especificados
         render();
 
         // Cambiar los buffers y presentar a pantalla
-        glfwSwapBuffers(gl->win);
+        glfwSwapBuffers(gl->win); 
+
+        // Limpiar el estado de las teclas y volver a llamar a los eventos
         for (auto& [c, t] : gl->io.teclas) {
             t.liberada = false;
             t.presionada = false;
@@ -64,14 +68,35 @@ namespace tofu
 
     // Dibujar objeto por instancias
     inline void dibujar(ui32 n, str geom) {
-        glDrawElementsInstancedBaseVertex(
-            GL_TRIANGLES,
-            gl->geometrias[geom].icount,
-            GL_UNSIGNED_INT,
-            (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
-            n, 
-            gl->geometrias[geom].voff / gl->v_offset);
+        if (not gl->geometrias.count(geom)) {
+            log::error("No se ha encontrado la geometría con nombre: ", geom);
+            return;
+        }
+
+        // Actualizamos la instancia base (todas las shaders tienen que tener un uniform baseins)
+        shader::uniform("baseins", gl->instancia_base);
         
+        // Sin índices
+        if (gl->geometrias[geom].icount == 0) {
+            glDrawArraysInstanced(
+                gl->geometrias[geom].tipo_dibujo,
+                gl->geometrias[geom].voff / gl->v_offset,
+                gl->geometrias[geom].vcount / gl->v_offset,
+                n);
+        }
+        // Con índices
+        else {
+            glDrawElementsInstancedBaseVertex(
+                gl->geometrias[geom].tipo_dibujo,
+                gl->geometrias[geom].icount,
+                GL_UNSIGNED_INT,
+                (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
+                n, 
+                gl->geometrias[geom].voff / gl->v_offset);
+        }
+
+        gl->instancia_base += n;
+
         debug::gl();
     }
 

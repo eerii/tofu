@@ -104,13 +104,9 @@ namespace tofu
             debug::gl();
         }
 
-        // Cargar los datos de los vértices en la GPU
-        inline void cargarVert(str nombre, std::pair<std::vector<float>, std::vector<ui32>> vertices) {
-            // Activar el VAO
-            glBindVertexArray(gl->VAO);
-
-            // Obtener últimas posiciones utilizadas
-            PosVertices pos = {0, 0, 0, 0};
+        // Obtener la posición libre de los vértices e índices
+        inline Geometria ultimaPosVert() {
+            Geometria pos = {0, 0, 0, 0, 0};
             ui32 max_i = 0;
             for (auto& [n, p] : gl->geometrias) {
                 if (p.voff + p.vcount > max_i) {
@@ -118,10 +114,43 @@ namespace tofu
                     pos = p;
                 }
             }
+            return pos;
+        }
+
+        // Cargar los datos de los vértices en la GPU (sin índices)
+        inline void cargarVert(str nombre, std::vector<float> vertices, ui32 tipo_dibujo = GL_TRIANGLES) {
+            // Activar el VAO
+            glBindVertexArray(gl->VAO);
+
+            // Obtener últimas posiciones utilizadas
+            Geometria pos = ultimaPosVert();
+            pos.voff += pos.vcount;
+            pos.vcount = vertices.size();
+            pos.icount = 0;
+            pos.tipo_dibujo = tipo_dibujo;
+
+            // Añadir vértices
+            cargar(gl->VBO, vertices, pos.voff);
+
+            // Guardar la posición de la geometría
+            gl->geometrias[nombre] = pos;
+
+            debug::gl();
+            configurarVAO(gl->VAO);
+        }
+
+        // Cargar los datos de los vértices en la GPU (con índices)
+        inline void cargarVert(str nombre, std::pair<std::vector<float>, std::vector<ui32>> vertices, ui32 tipo_dibujo = GL_TRIANGLES) {
+            // Activar el VAO
+            glBindVertexArray(gl->VAO);
+
+            // Obtener últimas posiciones utilizadas
+            Geometria pos = ultimaPosVert();
             pos.voff += pos.vcount;
             pos.vcount = vertices.first.size();
             pos.ioff += pos.icount;
             pos.icount = vertices.second.size();
+            pos.tipo_dibujo = tipo_dibujo;
 
             // Añadir vértices e índices
             cargar(gl->VBO, vertices.first, pos.voff);

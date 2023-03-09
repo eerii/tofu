@@ -5,11 +5,11 @@
 
 // ---
 
-glm::vec3 cam_pos = glm::vec3(0.f, 0.f, 8.f);
+glm::vec3 cam_pos = glm::vec3(0.f, -5.f, 20.f);
 glm::vec3 cam_vel = glm::vec3(0.f);
 
 float yaw = 0.f;
-float pitch = 0.5f * M_PI;
+float pitch = 0.5f * M_PI - 0.2f;
 float roll;
 glm::vec3 cam_up = glm::vec3(0.f, 1.f, 0.f);
 glm::vec3 cam_front, cam_right;
@@ -44,11 +44,11 @@ namespace tofu
             cam_vel.z *= deceleracion;
 
         // Movimiento arriba-abajo
-        if (gl->io.teclas[GLFW_KEY_Q].mantenida)
+        if (gl->io.teclas[GLFW_KEY_X].mantenida)
             cam_vel += cam_up * aceleracion;
-        if (gl->io.teclas[GLFW_KEY_E].mantenida)
+        if (gl->io.teclas[GLFW_KEY_SPACE].mantenida)
             cam_vel += cam_up * -aceleracion;
-        if (not gl->io.teclas[GLFW_KEY_E].mantenida and not gl->io.teclas[GLFW_KEY_Q].mantenida)
+        if (not gl->io.teclas[GLFW_KEY_X].mantenida and not gl->io.teclas[GLFW_KEY_SPACE].mantenida)
             cam_vel.y *= deceleracion;
 
         // Velocidad máxima
@@ -60,15 +60,17 @@ namespace tofu
         // Aplicar velocidad
         cam_pos += cam_vel;
 
-        // Yaw - Ratón X
-        float yaw_d = gl->io.mouse.xoff * acc_raton;
-        yaw += std::clamp(yaw_d, -raton_max, raton_max);
-        yaw = std::fmod(yaw, 2.f * M_PI);
+        if (gl->raton_conectado) {
+            // Yaw - Ratón X
+            float yaw_d = gl->io.mouse.xoff * acc_raton;
+            yaw += std::clamp(yaw_d, -raton_max, raton_max);
+            yaw = std::fmod(yaw, 2.f * M_PI);
 
-        // Pitch - Ratón Y
-        float pitch_d = gl->io.mouse.yoff * acc_raton;
-        pitch += std::clamp(pitch_d, -raton_max, raton_max);
-        pitch = std::clamp(pitch, 0.f, (float)M_PI);
+            // Pitch - Ratón Y
+            float pitch_d = gl->io.mouse.yoff * acc_raton;
+            pitch += std::clamp(pitch_d, -raton_max, raton_max);
+            pitch = std::clamp(pitch, 0.f, (float)M_PI);
+        }
 
         // Calcular los nuevos vectores de cámara
         cam_front = glm::vec3(cos(yaw - 0.5f * M_PI) * sin(pitch), cos(pitch), sin(yaw - 0.5f * M_PI) * sin(pitch));

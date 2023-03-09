@@ -15,6 +15,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#define TEX_BUFFER_OFF 8
+
 namespace tofu 
 {
     // Alias de tipos
@@ -64,23 +66,27 @@ namespace tofu
     };
 
     // Posición relativa en el vector de vértices/indices
-    struct PosVertices {
+    struct Geometria {
         ui32 voff, vcount;
         ui32 ioff, icount;
+        ui32 tipo_dibujo;
     };
 
     // Estructura de datos de OpenGL
     struct GL {
         GLFWwindow* win;
         Input io;
+        bool raton_conectado = true;
 
         ui32 VAO;
         Buffer VBO, EBO;
         std::vector<ui32> atributos;
-        ui32 v_offset;
+        ui32 v_offset = 0;
+        int instancia_base = 0;
 
         std::unordered_map<str, Shader> shaders;
-        std::unordered_map<str, PosVertices> geometrias;
+        str shader_actual = "";
+        std::unordered_map<str, Geometria> geometrias;
 
         glm::mat4 view;
         glm::mat4 proj;

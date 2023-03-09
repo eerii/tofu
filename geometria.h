@@ -88,6 +88,21 @@ namespace tofu
             return std::make_pair(detail::cube_vert, detail::cube_ind);
         }
 
+        // Circulo
+        // Lineas en vez de triágulos, no índices
+        inline auto circulo(ui32 n) {
+            std::vector<float> vertices;
+
+            for (ui32 i = 0; i <= n; i++) {
+                float theta = 2.f * M_PI * i / n;
+                vertices.push_back(std::cos(theta));
+                vertices.push_back(0.f);
+                vertices.push_back(std::sin(theta));
+            }
+
+            return vertices;
+        }
+
         // Esfera a partir de octaedro
         // Creamos las subdivisiones dividiendo cada arista n veces, no como se hace tradicionalmente, para tener más control sobre la división
         inline auto esferaOct(ui32 n) {
