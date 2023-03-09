@@ -13,7 +13,7 @@ namespace tofu
     inline void initGL(ui16 w, ui16 h, str nombre) {
         // Creamos la estructura de datos de OpenGL
         gl = std::make_unique<GL>();
-        gl->win = crearContexto(w, h, "Sistema Solar");
+        gl->win = crearContexto(w, h, nombre);
 
         // Cargar OpenGL con GLAD
         if (not gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -34,6 +34,9 @@ namespace tofu
         // Transparencia
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // Multisamplin
+        glEnable(GL_MULTISAMPLE);
 
         // Matriz de perspectiva
         ajustarPerspectiva(w, h);

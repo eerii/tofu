@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <string>
+#include <cstdlib>
+#include <ctime>
 
 #include <array>
 #include <vector>
@@ -14,8 +16,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#define TEX_BUFFER_OFF 8
 
 namespace tofu 
 {
@@ -59,6 +59,7 @@ namespace tofu
     };
     struct Texture {
         ui32 texture;
+        ui32 index;
     };
     struct TexBuffer {
         Buffer b;

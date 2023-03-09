@@ -16,6 +16,7 @@ namespace tofu
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
+        glfwWindowHint(GLFW_SAMPLES, 4);
 
         // Crear la ventana							
         GLFWwindow* win = glfwCreateWindow(w, h, nombre.c_str(), NULL, NULL);

@@ -175,11 +175,10 @@ namespace tofu
 
             // Texture buffers
             else if constexpr (std::is_same_v<T, TexBuffer>) {
-                static int n = TEX_BUFFER_OFF;
-                glActiveTexture(GL_TEXTURE0 + n);
+                glActiveTexture(GL_TEXTURE0 + valor.t.index);
                 glBindTexture(GL_TEXTURE_BUFFER, valor.t.texture);
                 glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, valor.b.buffer);
-                glUniform1i(gl->shaders[shader].uniforms[nombre], n++);
+                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t.index);
             } 
 
             // Tipo no soportado

@@ -58,7 +58,7 @@ namespace tofu
         template <typename T>
         void cargar(Buffer& buf, std::vector<T> datos, ui32 pos = 0) {
             ui32 tam = datos.size();
-
+            
             // Redimensionar el buffer si es necesario
             if (pos + tam > buf.tam)
                 redimensionar(buf, pos + tam);
