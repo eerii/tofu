@@ -144,6 +144,8 @@ namespace tofu
                 glUniform3fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::vec4>>) {
                 glUniform4fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+            } else if constexpr (std::is_same_v<T, std::vector<glm::ivec4>>) {
+                glUniform4iv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
                 glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
             } else {

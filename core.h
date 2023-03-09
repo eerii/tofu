@@ -30,13 +30,8 @@ namespace tofu
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
 
-        // Inicializar los buffers y activarlos
-        glGenVertexArrays(1, &gl->VAO);
-        glGenBuffers(1, &gl->VBO);
-        glGenBuffers(1, &gl->EBO);
-
         // Matriz de perspectiva
-        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 100.f);
+        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 1000.f);
         gl->proj[1][1] *= -1;
 
         debug::gl();
@@ -67,11 +62,24 @@ namespace tofu
         return not glfwWindowShouldClose(gl->win);
     }
 
+    // Dibujar objeto por instancias
+    inline void dibujar(ui32 n, str geom) {
+        glDrawElementsInstancedBaseVertex(
+            GL_TRIANGLES,
+            gl->geometrias[geom].icount,
+            GL_UNSIGNED_INT,
+            (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
+            n, 
+            gl->geometrias[geom].voff / gl->v_offset);
+        
+        debug::gl();
+    }
+
     // Limpieza
     inline void terminarGL() {
         glDeleteVertexArrays(1, &gl->VAO);
-        glDeleteBuffers(1, &gl->VBO);
-        glDeleteBuffers(1, &gl->EBO);
+        glDeleteBuffers(1, &gl->VBO.buffer);
+        glDeleteBuffers(1, &gl->EBO.buffer);
 
         for (auto& [n, s] : gl->shaders)
             glDeleteProgram(s.pid);

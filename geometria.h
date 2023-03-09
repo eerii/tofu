@@ -34,19 +34,19 @@ namespace tofu
         }
 
         // Puntos de un plano
-        constexpr std::array<float, 12> plane_vert = {
+        const std::vector<float> plane_vert = {
              1.f, 1.f, 0.f,
             -1.f, 1.f, 0.f,
             -1.f,-1.f, 0.f,
              1.f,-1.f, 0.f
         };
-        constexpr std::array<ui32, 6> plane_ind = {
+        const std::vector<ui32> plane_ind = {
             0, 2, 1,
             0, 3, 2
         };
 
         // Puntos de un cubo
-        constexpr std::array<float, 24> cube_vert = {
+        const std::vector<float> cube_vert = {
              1.f, 1.f, 1.f,
              1.f, 1.f,-1.f,
             -1.f, 1.f,-1.f,
@@ -56,7 +56,7 @@ namespace tofu
             -1.f,-1.f,-1.f,
             -1.f,-1.f, 1.f
         };
-        constexpr std::array<ui32, 36> cube_ind = {
+        const std::vector<ui32> cube_ind = {
             0, 2, 1, 0, 3, 2, // Arriba
             4, 5, 6, 4, 6, 7, // Abajo
             0, 1, 5, 0, 5, 4, // Frente
@@ -66,7 +66,7 @@ namespace tofu
         };
 
         // Puntos de un octaedro
-        constexpr std::array<float, 24> oct_vert = {
+        const std::vector<float> oct_vert = {
              0.f, 1.f, 0.f, // Arriba
              1.f, 0.f, 0.f,
              0.f, 0.f, 1.f,
@@ -79,29 +79,28 @@ namespace tofu
     namespace geometria
     {
         // Plano
-        inline void plano(std::vector<float>& vertices, std::vector<ui32>& indices) {
-            vertices = {detail::plane_vert.begin(), detail::plane_vert.end()};
-            indices = {detail::plane_ind.begin(), detail::plane_ind.end()};
+        inline auto plano() {
+            return std::make_pair(detail::plane_vert, detail::plane_ind);
         }
 
         // Cubo
-        inline void cubo(std::vector<float>& vertices, std::vector<ui32>& indices) {
-            vertices = {detail::cube_vert.begin(), detail::cube_vert.end()};
-            indices = {detail::cube_ind.begin(), detail::cube_ind.end()};
+        inline auto cubo() {
+            return std::make_pair(detail::cube_vert, detail::cube_ind);
         }
 
         // Esfera a partir de octaedro
         // Creamos las subdivisiones dividiendo cada arista n veces, no como se hace tradicionalmente, para tener más control sobre la división
-        inline void esferaOct(ui32 n, std::vector<float>& vertices, std::vector<ui32>& indices) {
+        inline auto esferaOct(ui32 n) {
             if (n < 1) {
                 log::error("El nivel de subdivisión debe ser mayor o igual a 1");
-                return;
+                std::exit(1);
             }
 
             using V = std::array<float, 3>;
             using I = std::array<ui32, 3>;
             auto& ov = detail::oct_vert;
-            vertices.clear(); indices.clear();
+            std::vector<float> vertices;
+            std::vector<ui32> indices;
 
             // Primer punto
             V v0 = {ov[0], ov[1], ov[2]};
@@ -228,40 +227,8 @@ namespace tofu
                 vert_acc -= vert;
                 vert_anterior = primer_vertice;
             }
-        }
 
-        // Esfera de fibonacci (para hacer triángulos se necesitaría el algoritmo de Delunay)
-        inline void esferaFib(ui32 n, std::vector<float>& vertices) {
-            vertices.clear();
-            vertices.reserve(n * 3);
-
-            std::array<float, 3> v;
-            std::array<float, 3> c;
-
-            for (ui32 i = 0; i < n; ++i) {
-                // Cálculo de puntos de fibonacci
-                v = detail::fib(i, n);
-                c = {v[0] * .5f + .5f, v[1] * .5f + .5f, v[2] * .5f + .5f};
-
-                // Añadir a la lista de vértices
-                vertices.insert(vertices.end(), v.begin(), v.end());
-                vertices.insert(vertices.end(), c.begin(), c.end());
-            }
-
-            // Proyección estereográfica
-            std::vector<float> proyeccion(vertices.begin(), vertices.end());
-            for (ui32 i = 0; i < proyeccion.size(); i += 6) {
-                float x = proyeccion[i];
-                float y = proyeccion[i + 1];
-                float z = proyeccion[i + 2];
-
-                float r = std::sqrt(x * x + y * y + z * z);
-                float s = 2.f / (1.f + z);
-
-                proyeccion[i] = x * s;
-                proyeccion[i + 1] = y * s;
-                proyeccion[i + 2] = z * s;
-            }
+            return std::make_pair(vertices, indices);
         }
     }
 }

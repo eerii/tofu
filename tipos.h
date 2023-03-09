@@ -47,16 +47,33 @@ namespace tofu
         Mouse mouse;
     };
 
+    // Buffer de datos
+    struct Buffer {
+        ui32 buffer;
+        ui32 tipo;
+        ui32 modo;
+        ui32 tam;
+        ui32 bytes;
+    };
+
+    // Posición relativa en el vector de vértices/indices
+    struct PosVertices {
+        ui32 voff, vcount;
+        ui32 ioff, icount;
+    };
+
     // Estructura de datos de OpenGL
     struct GL {
         GLFWwindow* win;
         Input io;
 
         ui32 VAO;
-        ui32 VBO;
-        ui32 EBO;
+        Buffer VBO, EBO;
+        std::vector<ui32> atributos;
+        ui32 v_offset;
 
         std::unordered_map<str, Shader> shaders;
+        std::unordered_map<str, PosVertices> geometrias;
 
         glm::mat4 view;
         glm::mat4 proj;
