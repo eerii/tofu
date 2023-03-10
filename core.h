@@ -106,8 +106,12 @@ namespace tofu
     // Limpieza
     inline void terminarGL() {
         glDeleteVertexArrays(1, &gl->VAO);
-        glDeleteBuffers(1, &gl->VBO.buffer);
-        glDeleteBuffers(1, &gl->EBO.buffer);
+
+        for (auto& [i, b] : gl->buffers)
+            glDeleteBuffers(1, &b.buffer);
+
+        for (auto& [i, t] : gl->texturas)
+            glDeleteTextures(1, &t.textura);
 
         for (auto& [n, s] : gl->shaders)
             glDeleteProgram(s.pid);

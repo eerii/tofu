@@ -9,7 +9,7 @@ namespace tofu
     {
         inline void keymaps() {
             // Ver si el usuario quiere cerrar la ventana
-            if (gl->io.teclas[GLFW_KEY_Q].presionada)
+            if (gl->io.teclas[GLFW_KEY_LEFT_SHIFT].mantenida and gl->io.teclas[GLFW_KEY_Q].presionada)
                 glfwSetWindowShouldClose(gl->win, true);
 
             // Cambiar el modo del ratón

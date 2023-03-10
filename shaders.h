@@ -109,6 +109,7 @@ namespace tofu
         inline void usar(str nombre = "") {
             if (gl->shader_actual == nombre)
                 return;
+            gl->instancia_base = 0;
             
             gl->shader_actual = nombre;
             if (nombre.empty()) {
@@ -118,7 +119,7 @@ namespace tofu
 
             if (not gl->shaders.count(nombre)) {
                 log::error("No existe el shader especificado: {}", nombre);
-                return;
+                std::exit(-1);
             }
             glUseProgram(gl->shaders[nombre].pid);
             debug::gl();
@@ -130,7 +131,7 @@ namespace tofu
             str& shader = gl->shader_actual;
             if (shader.empty()) {
                 log::error("No se ha especificado una shader para actualizar el uniform: '{}'", nombre);
-                return;
+                std::exit(-1);
             }
 
             // Si no hemos registrado el uniform, obtenemos su localización
@@ -175,15 +176,22 @@ namespace tofu
 
             // Texture buffers
             else if constexpr (std::is_same_v<T, TexBuffer>) {
-                glActiveTexture(GL_TEXTURE0 + valor.t.index);
-                glBindTexture(GL_TEXTURE_BUFFER, valor.t.texture);
-                glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, valor.b.buffer);
-                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t.index);
+                Buffer &buf = gl->buffers[valor.b];
+                Textura &tex = gl->texturas[valor.t];
+                if (tex.target != GL_TEXTURE_BUFFER) {
+                    log::error("El uniform '{}' no es un texture buffer", nombre);
+                    std::exit(-1);
+                }
+                glActiveTexture(GL_TEXTURE0 + valor.t);debug::gl();
+                glBindTexture(GL_TEXTURE_BUFFER, tex.textura);debug::gl();
+                glTexBuffer(GL_TEXTURE_BUFFER, tex.formato, buf.buffer);debug::gl();
+                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t);debug::gl();
             } 
 
             // Tipo no soportado
             else {
                 log::error("No se puede asignar el uniform '{}' en la shader '{}'", nombre, shader);
+                std::exit(-1);
             }
 
             debug::gl();

@@ -8,6 +8,7 @@
 
 #include <array>
 #include <vector>
+#include <map>
 #include <unordered_map>
 
 #include <glad.h>
@@ -57,13 +58,16 @@ namespace tofu
         ui32 tam;
         ui32 bytes;
     };
-    struct Texture {
-        ui32 texture;
-        ui32 index;
+    struct Textura {
+        ui32 textura;
+        ui32 target;
+        ui32 formato;
+        ui32 tipo;
+        glm::ivec2 tam;
     };
     struct TexBuffer {
-        Buffer b;
-        Texture t;
+        ui32 b;
+        ui32 t;
     };
 
     // Posición relativa en el vector de vértices/indices
@@ -80,14 +84,17 @@ namespace tofu
         bool raton_conectado = true;
 
         ui32 VAO;
-        Buffer VBO, EBO;
         std::vector<ui32> atributos;
+        ui32 VBO, EBO;
         ui32 v_offset = 0;
         int instancia_base = 0;
 
-        std::unordered_map<str, Shader> shaders;
         str shader_actual = "";
+        std::unordered_map<str, Shader> shaders;
         std::unordered_map<str, Geometria> geometrias;
+
+        std::unordered_map<ui32, Buffer> buffers;
+        std::map<ui32, Textura> texturas;
 
         glm::mat4 view;
         glm::mat4 proj;
