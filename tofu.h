@@ -17,4 +17,4 @@
 #include "shaders.h"
 #include "buffers.h"
 #include "geometria.h"
-#include "camara.h"
+#include "gui.h"

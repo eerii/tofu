@@ -5,6 +5,7 @@
 
 #include "debug.h"
 #include "window.h"
+#include "gui.h"
 #include "shaders.h"
 
 namespace tofu
@@ -20,6 +21,9 @@ namespace tofu
             log::error("No se han podido cargar los símbolos de OpenGL con GLAD");
             std::exit(-1);
         }
+
+        // Cargar ImGui
+        gui::init();
 
         // Colores para clear
         glClearDepth(1.0f);
@@ -46,13 +50,14 @@ namespace tofu
 
     // Bucle de la aplicación
     using update_fun_t = std::function<void()>;
-    inline bool update(update_fun_t render = []{}) {
+    inline bool update(update_fun_t render = []{}, update_fun_t gui_render = []{}) {
         // Limpiar la pantalla antes de seguir
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         gl->instancia_base = 0;
 
         // Llamar a los comandos de renderizados especificados
         render();
+        gui::render(gui_render);
 
         // Cambiar los buffers y presentar a pantalla
         glfwSwapBuffers(gl->win); 
@@ -105,6 +110,8 @@ namespace tofu
 
     // Limpieza
     inline void terminarGL() {
+        gui::terminar();
+
         glDeleteVertexArrays(1, &gl->VAO);
 
         for (auto& [i, b] : gl->buffers)
