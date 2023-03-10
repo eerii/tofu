@@ -155,6 +155,10 @@ namespace tofu {
 
     namespace debug
     {
+        inline double time() { return glfwGetTime(); }
+
+        #ifdef DEBUG
+
         inline void gl(const detail::source_location &location = detail::source_location::current()) {
             GLenum err;
             str err_type = "UNKNOWN";
@@ -171,5 +175,29 @@ namespace tofu {
                 std::cerr << color::bold_on << color::magenta << "[GL!]: " << color::reset << color::bold_off << err_type << " in " << location.file_name() << ":" << location.line() << std::endl;
             }
         }
+
+        inline double curr_time = 0, prev_time = 0;
+        inline double frame_time = 0, render_usuario_time = 0, render_gui_time = 0, present_time = 0;
+
+        inline ui32 num_draw = 0, num_instancias = 0;
+        inline ui32 num_vertices = 0, num_triangulos = 0;
+
+        inline bool usar_instancias = true;
+
+        #else
+
+        inline void gl() {}
+
+        #endif
     }
 }
+
+#ifdef DEBUG
+    #define TIME(x, res) { \
+        double t = debug::time(); \
+        x; \
+        res = debug::time() - t; \
+    }
+#else
+    #define TIME(x, res) x
+#endif

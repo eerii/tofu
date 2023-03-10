@@ -99,7 +99,5 @@ namespace tofu
         glm::mat4 view;
         glm::mat4 proj;
     };
-
-    // Referencia a los datos de OpenGL
     inline std::unique_ptr<GL> gl;
 }

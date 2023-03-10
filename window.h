@@ -35,6 +35,9 @@ namespace tofu
         // Ratón desactivado para tener movimiento ilimitado en la cámara
         glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+        // VSync
+        glfwSwapInterval(1);
+
         return win;
     }
 
