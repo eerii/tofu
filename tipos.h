@@ -32,6 +32,7 @@ namespace tofu
     // Estructura de un shader
     struct Shader {
         ui32 pid;
+        str vao;
         std::unordered_map<str, ui32> uniforms;
     };
 
@@ -77,16 +78,19 @@ namespace tofu
         ui32 tipo_dibujo;
     };
 
+    // VAO
+    struct VAO {
+        ui32 vao, vbo, ebo;
+        std::vector<ui32> atributos;
+    };
+
     // Estructura de datos de OpenGL
     struct GL {
         GLFWwindow* win;
         Input io;
         bool raton_conectado = true;
 
-        ui32 VAO;
-        std::vector<ui32> atributos;
-        ui32 VBO, EBO;
-        ui32 v_offset = 0;
+        std::unordered_map<str, VAO> VAOs;
         int instancia_base = 0;
 
         str shader_actual = "";

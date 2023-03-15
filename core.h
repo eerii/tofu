@@ -2,6 +2,7 @@
 #pragma once
 
 #include <functional>
+#include <numeric>
 
 #include "debug.h"
 #include "window.h"
@@ -86,7 +87,7 @@ namespace tofu
     }
 
     // Dibujar objeto por instancias
-    inline void dibujar(ui32 n, str geom) {
+    inline void dibujar(ui32 n, str geom, str vao = "main") {
         // Métricas de debug
         #ifdef DEBUG
         debug::num_instancias += n;
@@ -101,6 +102,7 @@ namespace tofu
 
         // Actualizamos la instancia base (todas las shaders tienen que tener un uniform baseins)
         shader::uniform("baseins", gl->instancia_base);
+        ui32 attr_offset = std::accumulate(gl->VAOs[vao].atributos.begin(), gl->VAOs[vao].atributos.end(), 0);
 
         // Sin índices
         if (gl->geometrias[geom].icount == 0) {
@@ -108,16 +110,16 @@ namespace tofu
             if (debug::usar_instancias) {
                 glDrawArraysInstanced(
                     gl->geometrias[geom].tipo_dibujo,
-                    gl->geometrias[geom].voff / gl->v_offset,
-                    gl->geometrias[geom].vcount / gl->v_offset,
+                    gl->geometrias[geom].voff / attr_offset,
+                    gl->geometrias[geom].vcount / attr_offset,
                     n);
                 debug::num_draw++;
             } else {
                 for (ui32 i = 1; i <= n; i++) {
                     glDrawArrays(
                         gl->geometrias[geom].tipo_dibujo,
-                        gl->geometrias[geom].voff / gl->v_offset,
-                        gl->geometrias[geom].vcount / gl->v_offset);
+                        gl->geometrias[geom].voff / attr_offset,
+                        gl->geometrias[geom].vcount / attr_offset);
                     shader::uniform<int>("baseins", gl->instancia_base + i);
                     debug::num_draw++;
                 }
@@ -125,8 +127,8 @@ namespace tofu
             #else
             glDrawArraysInstanced(
                 gl->geometrias[geom].tipo_dibujo,
-                gl->geometrias[geom].voff / gl->v_offset,
-                gl->geometrias[geom].vcount / gl->v_offset,
+                gl->geometrias[geom].voff / attr_offset,
+                gl->geometrias[geom].vcount / attr_offset,
                 n);
             #endif
         }
@@ -140,7 +142,7 @@ namespace tofu
                     GL_UNSIGNED_INT,
                     (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
                     n, 
-                    gl->geometrias[geom].voff / gl->v_offset);
+                    gl->geometrias[geom].voff / attr_offset);
                 debug::num_draw++;
             } else {
                 debug::num_draw--;
@@ -150,7 +152,7 @@ namespace tofu
                         gl->geometrias[geom].icount,
                         GL_UNSIGNED_INT,
                         (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
-                        gl->geometrias[geom].voff / gl->v_offset);
+                        gl->geometrias[geom].voff / attr_offset);
                     shader::uniform<int>("baseins", gl->instancia_base + i);
                     debug::num_draw++;
                 }
@@ -162,7 +164,7 @@ namespace tofu
                 GL_UNSIGNED_INT,
                 (void*)(gl->geometrias[geom].ioff * sizeof(ui32)),
                 n, 
-                gl->geometrias[geom].voff / gl->v_offset);
+                gl->geometrias[geom].voff / attr_offset);
             #endif
         }
 
@@ -174,7 +176,11 @@ namespace tofu
     inline void terminarGL() {
         gui::terminar();
 
-        glDeleteVertexArrays(1, &gl->VAO);
+        for (auto& [n, v] : gl->VAOs) {
+            glDeleteVertexArrays(1, &v.vao);
+            glDeleteBuffers(1, &v.vbo);
+            glDeleteBuffers(1, &v.ebo);
+        }
 
         for (auto& [i, b] : gl->buffers)
             glDeleteBuffers(1, &b.buffer);

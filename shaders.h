@@ -97,9 +97,10 @@ namespace tofu
     namespace shader
     {
         // Cargar una shader en el programa
-        inline void cargar(str nombre) {
+        inline void cargar(str nombre, str vao = "main") {
             Shader s {
-                .pid = detail::cargarShader(nombre + ".vert", nombre + ".frag")
+                .pid = detail::cargarShader(nombre + ".vert", nombre + ".frag"),
+                .vao = vao
             };
             gl->shaders[nombre] = s;
             glUseProgram(0);
@@ -122,6 +123,8 @@ namespace tofu
                 std::exit(-1);
             }
             glUseProgram(gl->shaders[nombre].pid);
+            glBindVertexArray(gl->VAOs[gl->shaders[nombre].vao].vao);
+
             debug::gl();
         }
 

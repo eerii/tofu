@@ -75,34 +75,39 @@ namespace tofu
         }
 
         // Inicializamos los buffers principales de OpenGL
-        inline void iniciarVAO(std::vector<ui32> attr, ui32 vert_alloc = 0, ui32 ind_alloc = 0) {
+        inline void iniciarVAO(std::vector<ui32> attr, str n = "main", ui32 vert_alloc = 0, ui32 ind_alloc = 0) {
             // VAO
-            glGenVertexArrays(1, &gl->VAO);
+            glGenVertexArrays(1, &gl->VAOs[n].vao);
 
             // Creamos los buffers de vértices e índices
-            gl->VBO = crear(GL_ARRAY_BUFFER, std::vector<float>(vert_alloc), GL_STATIC_DRAW);
-            gl->EBO = crear(GL_ELEMENT_ARRAY_BUFFER, std::vector<ui32>(ind_alloc), GL_STATIC_DRAW);
+            gl->VAOs[n].vbo = crear(GL_ARRAY_BUFFER, std::vector<float>(vert_alloc), GL_STATIC_DRAW);
+            gl->VAOs[n].ebo = crear(GL_ELEMENT_ARRAY_BUFFER, std::vector<ui32>(ind_alloc), GL_STATIC_DRAW);
 
             // Guardamos los atributos del VAO
-            gl->atributos = attr;
+            gl->VAOs[n].atributos = attr;
 
             debug::gl();
         }
 
         // Configurar el VAO y sus atributos
-        inline void configurarVAO(ui32 VAO) {
-            if (gl->atributos.size() == 0) {
+        inline void configurarVAO(str n) {
+            if (gl->VAOs.find(n) == gl->VAOs.end()) {
+                log::error("No existe el VAO " + n);
+                std::exit(-1);
+            }
+            VAO& v = gl->VAOs[n];
+            if (v.atributos.size() == 0) {
                 log::error("No se han especificado los atributos del VAO");
                 std::exit(-1);
             }
 
-            glBindVertexArray(VAO);
-            ui32 tam_total = std::accumulate(gl->atributos.begin(), gl->atributos.end(), 0);
-            gl->v_offset = 0;
-            for (ui32 i = 0; i < gl->atributos.size(); i++) {
-                glVertexAttribPointer(i, gl->atributos[i], GL_FLOAT, GL_FALSE, tam_total * sizeof(float), (void*)(gl->v_offset * sizeof(float)));
+            glBindVertexArray(v.vao);
+            ui32 tam_total = std::accumulate(v.atributos.begin(), v.atributos.end(), 0);
+            ui32 attr_offset = 0;
+            for (ui32 i = 0; i < v.atributos.size(); i++) {
+                glVertexAttribPointer(i, v.atributos[i], GL_FLOAT, GL_FALSE, tam_total * sizeof(float), (void*)(attr_offset * sizeof(float)));
                 glEnableVertexAttribArray(i);
-                gl->v_offset += gl->atributos[i];
+                attr_offset += v.atributos[i];
             }
 
             debug::gl();
@@ -122,9 +127,9 @@ namespace tofu
         }
 
         // Cargar los datos de los vértices en la GPU (sin índices)
-        inline void cargarVert(str nombre, std::vector<float> vertices, ui32 tipo_dibujo = GL_TRIANGLES) {
+        inline void cargarVert(str nombre, std::vector<float> vertices, str vao = "main", ui32 tipo_dibujo = GL_TRIANGLES) {
             // Activar el VAO
-            glBindVertexArray(gl->VAO);
+            glBindVertexArray(gl->VAOs[vao].vao);
 
             // Obtener últimas posiciones utilizadas
             Geometria pos = ultimaPosVert();
@@ -134,19 +139,19 @@ namespace tofu
             pos.tipo_dibujo = tipo_dibujo;
 
             // Añadir vértices
-            cargar(gl->VBO, vertices, pos.voff);
+            cargar(gl->VAOs[vao].vbo, vertices, pos.voff);
 
             // Guardar la posición de la geometría
             gl->geometrias[nombre] = pos;
 
             debug::gl();
-            configurarVAO(gl->VAO);
+            configurarVAO(vao);
         }
 
         // Cargar los datos de los vértices en la GPU (con índices)
-        inline void cargarVert(str nombre, std::pair<std::vector<float>, std::vector<ui32>> vertices, ui32 tipo_dibujo = GL_TRIANGLES) {
+        inline void cargarVert(str nombre, std::pair<std::vector<float>, std::vector<ui32>> vertices, str vao = "main", ui32 tipo_dibujo = GL_TRIANGLES) {
             // Activar el VAO
-            glBindVertexArray(gl->VAO);
+            glBindVertexArray(gl->VAOs[vao].vao);
 
             // Obtener últimas posiciones utilizadas
             Geometria pos = ultimaPosVert();
@@ -157,21 +162,21 @@ namespace tofu
             pos.tipo_dibujo = tipo_dibujo;
 
             // Añadir vértices e índices
-            cargar(gl->VBO, vertices.first, pos.voff);
-            cargar(gl->EBO, vertices.second, pos.ioff);
+            cargar(gl->VAOs[vao].vbo, vertices.first, pos.voff);
+            cargar(gl->VAOs[vao].ebo, vertices.second, pos.ioff);
 
             // Guardar la posición de la geometría
             gl->geometrias[nombre] = pos;
 
             debug::gl();
-            configurarVAO(gl->VAO);
+            configurarVAO(vao);
         }
     }
 
     namespace textura
     {
         // Crea una textura
-        ui32 crear(ui32 target, ui32 formato, ui32 tipo, ui32 i_offset = 0, glm::ivec2 tam = glm::ivec2(0, 0)) {
+        inline ui32 crear(ui32 target, ui32 formato, ui32 tipo, ui32 i_offset = 0, glm::ivec2 tam = glm::ivec2(0, 0)) {
             ui32 indice = i_offset;
             for (auto& [i, t] : gl->texturas)
                 if (i == indice)
