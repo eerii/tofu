@@ -33,6 +33,7 @@ namespace tofu
     struct Shader {
         ui32 pid;
         str vao;
+        ui32 fbo;
         std::unordered_map<str, ui32> uniforms;
     };
 
@@ -71,6 +72,14 @@ namespace tofu
         ui32 t;
     };
 
+    // Framebuffers
+    struct Framebuffer {
+        ui32 fbo;
+        ui32 tex;
+        glm::ivec2 tam;
+        glm::vec4 clear;
+    };
+
     // Posición relativa en el vector de vértices/indices
     struct Geometria {
         ui32 voff, vcount;
@@ -99,6 +108,7 @@ namespace tofu
 
         std::unordered_map<ui32, Buffer> buffers;
         std::map<ui32, Textura> texturas;
+        std::unordered_map<ui32, Framebuffer> framebuffers;
 
         glm::mat4 view;
         glm::mat4 proj;

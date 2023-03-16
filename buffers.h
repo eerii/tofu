@@ -196,6 +196,41 @@ namespace tofu
             return indice;
         }
 
+        inline ui32 fi_a_formato(ui32 fint) {
+            ui32 formato;
+
+            if (fint == GL_R32F or fint == GL_R32I or fint == GL_R32UI)
+                formato = GL_RED;
+            else if (fint == GL_RG32F or fint == GL_RG32I or fint == GL_RG32UI)
+                formato = GL_RG;
+            else if (fint == GL_RGB32F or fint == GL_RGB32I or fint == GL_RGB32UI)
+                formato = GL_RGB;
+            else if (fint == GL_RGBA32F or fint == GL_RGBA32I or fint == GL_RGBA32UI)
+                formato = GL_RGBA;
+            else {
+                log::error("Formato de textura no soportado");
+                std::exit(-1);
+            }
+
+            return formato;
+        }
+
+        inline ui32 fi_a_tipo(ui32 fint) {
+            ui32 tipo;
+
+            if (fint == GL_R32F or fint == GL_RG32F or fint == GL_RGB32F or fint == GL_RGBA32F)
+                tipo = GL_FLOAT;
+            else if (fint == GL_R32I or fint == GL_RG32I or fint == GL_RGB32I or fint == GL_RGBA32I)
+                tipo = GL_INT;
+            else if (fint == GL_R32UI or fint == GL_RG32UI or fint == GL_RGB32UI or fint == GL_RGBA32UI)
+                tipo = GL_UNSIGNED_INT;
+            else {
+                log::error("Formato de textura no soportado");
+                std::exit(-1);
+            }
+
+            return tipo;
+        }
     }
 
     namespace texbuffer
@@ -240,6 +275,45 @@ namespace tofu
             ui32 buffer = buffer::crear(GL_TEXTURE_BUFFER, datos, GL_STATIC_DRAW);
             ui32 textura = textura::crear(GL_TEXTURE_BUFFER, formato, 0, texbuffer_offset);
             return {buffer, textura};
+        }
+    }
+
+    namespace framebuffer
+    {
+        inline ui32 crear(glm::ivec2 tam, glm::vec4 clear) {
+            Framebuffer fb {
+                .tam = tam,
+                .clear = clear,
+            };
+
+            glGenFramebuffers(1, &fb.fbo);
+            glBindFramebuffer(GL_FRAMEBUFFER, fb.fbo);
+
+            // Creamos una textura
+            ui32 dimension = tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
+            fb.tex = textura::crear(dimension, GL_RGBA32F, 0);
+            Textura& tex = gl->texturas[fb.tex];
+            glBindTexture(dimension, tex.textura);
+
+            if (dimension == GL_TEXTURE_1D) { // 1D
+                glTexImage1D(GL_TEXTURE_1D, 0, tex.formato, fb.tam.x, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
+                glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_1D, tex.textura, 0);
+            } else { // 2D
+                glTexImage2D(GL_TEXTURE_2D, 0, tex.formato, fb.tam.x, fb.tam.y, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
+                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.textura, 0);
+            }
+
+            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+                log::error("Error al crear framebuffer");
+                debug::gl();
+                std::exit(-1);
+            }
+
+            debug::gl();
+
+            ui32 id = gl->buffers.size() + 1;
+            gl->framebuffers[id] = fb;
+            return id;
         }
     }
 }

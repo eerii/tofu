@@ -26,10 +26,6 @@ namespace tofu
         // Cargar ImGui
         gui::init();
 
-        // Colores para clear
-        glClearDepth(1.0f);
-        glClearColor(0.05f, 0.0f, 0.2f, 1.0f);
-
         // Profundidad
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
@@ -40,7 +36,7 @@ namespace tofu
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Multisamplin
+        // Multisampling
         glEnable(GL_MULTISAMPLE);
 
         // Matriz de perspectiva
@@ -64,7 +60,17 @@ namespace tofu
         #endif
 
         // Limpiar la pantalla antes de seguir
+        glClearDepth(1.0f);
+        glClearColor(0.05f, 0.0f, 0.2f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        for (auto& [k, f] : gl->framebuffers) {
+            glBindFramebuffer(GL_FRAMEBUFFER, f.fbo);
+            glClearColor(f.clear.r, f.clear.g, f.clear.b, f.clear.a);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Resetear la instancia base
         gl->instancia_base = 0;
 
         // Llamar a los comandos de renderizados especificados
@@ -187,6 +193,9 @@ namespace tofu
 
         for (auto& [i, t] : gl->texturas)
             glDeleteTextures(1, &t.textura);
+
+        for (auto& [i, f] : gl->framebuffers)
+            glDeleteFramebuffers(1, &f.fbo);
 
         for (auto& [n, s] : gl->shaders)
             glDeleteProgram(s.pid);

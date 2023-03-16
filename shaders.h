@@ -1,6 +1,7 @@
 // Cargar y procesar shaders GLSL
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 
@@ -97,10 +98,11 @@ namespace tofu
     namespace shader
     {
         // Cargar una shader en el programa
-        inline void cargar(str nombre, str vao = "main") {
+        inline void cargar(str nombre, str vao = "main", ui32 fbo = 0) {
             Shader s {
-                .pid = detail::cargarShader(nombre + ".vert", nombre + ".frag"),
-                .vao = vao
+                .pid = detail::cargarShader("shaders/" + nombre + ".vert", "shaders/" + nombre + ".frag"),
+                .vao = vao,
+                .fbo = fbo
             };
             gl->shaders[nombre] = s;
             glUseProgram(0);
@@ -124,6 +126,8 @@ namespace tofu
             }
             glUseProgram(gl->shaders[nombre].pid);
             glBindVertexArray(gl->VAOs[gl->shaders[nombre].vao].vao);
+            
+            glBindFramebuffer(GL_FRAMEBUFFER, gl->shaders[nombre].fbo > 0 ? gl->framebuffers[gl->shaders[nombre].fbo].fbo : 0);
 
             debug::gl();
         }
@@ -185,10 +189,10 @@ namespace tofu
                     log::error("El uniform '{}' no es un texture buffer", nombre);
                     std::exit(-1);
                 }
-                glActiveTexture(GL_TEXTURE0 + valor.t);debug::gl();
-                glBindTexture(GL_TEXTURE_BUFFER, tex.textura);debug::gl();
-                glTexBuffer(GL_TEXTURE_BUFFER, tex.formato, buf.buffer);debug::gl();
-                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t);debug::gl();
+                glActiveTexture(GL_TEXTURE0 + valor.t);
+                glBindTexture(GL_TEXTURE_BUFFER, tex.textura);
+                glTexBuffer(GL_TEXTURE_BUFFER, tex.formato, buf.buffer);
+                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t);
             } 
 
             // Tipo no soportado
