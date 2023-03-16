@@ -98,11 +98,12 @@ namespace tofu
     namespace shader
     {
         // Cargar una shader en el programa
-        inline void cargar(str nombre, str vao = "main", ui32 fbo = 0) {
+        inline void cargar(str nombre, str vao = "main", ui32 fbo = 0, OpcionesShader opt = {}) {
             Shader s {
                 .pid = detail::cargarShader("shaders/" + nombre + ".vert", "shaders/" + nombre + ".frag"),
                 .vao = vao,
-                .fbo = fbo
+                .fbo = fbo,
+                .opt = opt
             };
             gl->shaders[nombre] = s;
             glUseProgram(0);
@@ -112,22 +113,36 @@ namespace tofu
         inline void usar(str nombre = "") {
             if (gl->shader_actual == nombre)
                 return;
-            gl->instancia_base = 0;
             
             gl->shader_actual = nombre;
             if (nombre.empty()) {
                 glUseProgram(0);
                 return;
             }
-
+            
+            // Cambiamos la shader;
             if (not gl->shaders.count(nombre)) {
                 log::error("No existe el shader especificado: {}", nombre);
                 std::exit(-1);
             }
-            glUseProgram(gl->shaders[nombre].pid);
-            glBindVertexArray(gl->VAOs[gl->shaders[nombre].vao].vao);
-            
-            glBindFramebuffer(GL_FRAMEBUFFER, gl->shaders[nombre].fbo > 0 ? gl->framebuffers[gl->shaders[nombre].fbo].fbo : 0);
+            Shader& s = gl->shaders[nombre];
+            glUseProgram(s.pid);
+            glBindVertexArray(gl->VAOs[s.vao].vao);
+           
+            // Cambiamos el framebuffer
+            if (s.fbo == 0) {
+                glBindFramebuffer(GL_FRAMEBUFFER, 0);
+                glViewport(0, 0, gl->tam_fb.x, gl->tam_fb.y);
+            } else {
+                Framebuffer& fb = gl->framebuffers[s.fbo];
+                glBindFramebuffer(GL_FRAMEBUFFER, s.fbo > 0 ? fb.fbo : 0);
+                glViewport(0, 0, fb.tam.x, fb.tam.y);
+            }
+
+            // Parámetros extra de la shader
+            (s.opt.blend) ? glEnable(GL_BLEND) : glDisable(GL_BLEND);
+            (s.opt.cull) ? glEnable(GL_CULL_FACE) : glDisable(GL_CULL_FACE);
+            (s.opt.depth) ? glEnable(GL_DEPTH_TEST) : glDisable(GL_DEPTH_TEST);
 
             debug::gl();
         }

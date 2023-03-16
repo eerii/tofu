@@ -30,11 +30,17 @@ namespace tofu
     using str_view = std::string_view;
 
     // Estructura de un shader
+    struct OpcionesShader {
+        bool blend = true;
+        bool depth = true;
+        bool cull = true;
+    };
     struct Shader {
         ui32 pid;
         str vao;
         ui32 fbo;
         std::unordered_map<str, ui32> uniforms;
+        OpcionesShader opt;
     };
 
     // Estructura de datos de entrada
@@ -96,6 +102,7 @@ namespace tofu
     // Estructura de datos de OpenGL
     struct GL {
         GLFWwindow* win;
+        glm::ivec2 tam_win, tam_fb;
         Input io;
         bool raton_conectado = true;
 

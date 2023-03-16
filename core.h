@@ -23,25 +23,21 @@ namespace tofu
             std::exit(-1);
         }
 
+        // Funciones extra de ventana
+        windowSizeCallback(gl->win, w, h);
+
         // Cargar ImGui
         gui::init();
 
-        // Profundidad
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
+        // Configuración
+        // Nota: Estos parámetros se activan dependiendo de la shader utilizada
         glCullFace(GL_BACK);
         glFrontFace(GL_CCW);
-
-        // Transparencia
-        glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Multisampling
         glEnable(GL_MULTISAMPLE);
-
-        // Matriz de perspectiva
-        ajustarPerspectiva(w, h);
-
+        
         debug::gl();
     }
 
@@ -108,7 +104,7 @@ namespace tofu
 
         // Actualizamos la instancia base (todas las shaders tienen que tener un uniform baseins)
         shader::uniform("baseins", gl->instancia_base);
-        ui32 attr_offset = std::accumulate(gl->VAOs[vao].atributos.begin(), gl->VAOs[vao].atributos.end(), 0);
+        ui32 attr_offset = std::accumulate(gl->VAOs[vao].atributos.begin(), gl->VAOs[vao].atributos.end(), 0); 
 
         // Sin índices
         if (gl->geometrias[geom].icount == 0) {
