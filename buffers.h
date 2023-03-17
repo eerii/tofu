@@ -282,15 +282,24 @@ namespace tofu
     {
         inline ui32 crear(glm::ivec2 tam, glm::vec4 clear) {
             Framebuffer fb {
-                .tam = tam,
+                .tam = glm::ivec3(tam, 1),
                 .clear = clear,
             };
 
             glGenFramebuffers(1, &fb.fbo);
             glBindFramebuffer(GL_FRAMEBUFFER, fb.fbo);
 
-            // Creamos una textura
+            // Calculamos la dimensión
+            // - Su tamaño y determina si es 1D o 2D
+            // - Si su tamaño en x es mayor que el tamaño máximo de una textura, creamos un array
             ui32 dimension = tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
+            if (tam.x > gl->max_tex_size) {
+                dimension = tam.y < 2 ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_2D_ARRAY;
+                fb.tam.z = tam.x / gl->max_tex_size;
+                fb.tam.x = gl->max_tex_size;
+            }
+
+            // Creamos la textura
             fb.tex = textura::crear(dimension, GL_RGBA32F, 0);
             Textura& tex = gl->texturas[fb.tex];
             glBindTexture(dimension, tex.textura);
@@ -298,11 +307,19 @@ namespace tofu
             if (dimension == GL_TEXTURE_1D) { // 1D
                 glTexImage1D(GL_TEXTURE_1D, 0, tex.formato, fb.tam.x, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
                 glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_1D, tex.textura, 0);
-            } else { // 2D
+            } else if (dimension == GL_TEXTURE_2D) { // 2D
                 glTexImage2D(GL_TEXTURE_2D, 0, tex.formato, fb.tam.x, fb.tam.y, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
                 glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.textura, 0);
+            } else if (dimension == GL_TEXTURE_1D_ARRAY) { // 1D pero hecho array
+                glTexImage2D(GL_TEXTURE_1D_ARRAY, 0, tex.formato, fb.tam.x, fb.tam.z, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
+                glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex.textura, 0);
+                log::warn("Todavía no está implementado en las shaders usar un array de texturas para el framebuffer");
+            } else {
+                log::error("Dimension de framebuffer no soportada");
+                std::exit(-1);
             }
 
+            // Comprobamos que el framebuffer se haya creado bien
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
                 log::error("Error al crear framebuffer");
                 debug::gl();

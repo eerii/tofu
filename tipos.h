@@ -82,7 +82,7 @@ namespace tofu
     struct Framebuffer {
         ui32 fbo;
         ui32 tex;
-        glm::ivec2 tam;
+        glm::ivec3 tam;
         glm::vec4 clear;
     };
 
@@ -103,6 +103,8 @@ namespace tofu
     struct GL {
         GLFWwindow* win;
         glm::ivec2 tam_win, tam_fb;
+        ui32 max_tex_size;
+
         Input io;
         bool raton_conectado = true;
 

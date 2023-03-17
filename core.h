@@ -37,13 +37,17 @@ namespace tofu
 
         // Multisampling
         glEnable(GL_MULTISAMPLE);
+
+        // Obtener atributos
+        // Tamaño máximo de textura
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE, (GLint*)&gl->max_tex_size);
         
         debug::gl();
     }
 
     // Bucle de la aplicación
     using update_fun_t = std::function<void()>;
-    inline bool update(update_fun_t render = []{}, update_fun_t gui_render = []{}) {
+    inline bool update(update_fun_t render = []{}, update_fun_t gui_render = []{}, update_fun_t compute = []{}) {
         // Metricas de debug
         #ifdef DEBUG
         debug::prev_time = debug::curr_time;
@@ -64,7 +68,9 @@ namespace tofu
             glClearColor(f.clear.r, f.clear.g, f.clear.b, f.clear.a);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        // Funciones de computo
+        compute();
 
         // Resetear la instancia base
         gl->instancia_base = 0;
