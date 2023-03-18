@@ -5,6 +5,10 @@
 // Permite deshabilitar por completo la integración con ImGui
 #ifndef DISABLE_GUI
 
+#define VGIZMO_USES_GLM
+#define IMGUIZMO_IMGUI_FOLDER 
+#include "imGuIZMOquat.h"
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -27,7 +31,7 @@ namespace tofu
 
         ImGuiIO& io;
         bool ventana_demo = false;
-        bool ventana_rendimiento = true;
+        bool ventana_rendimiento = false;
         std::array<double, 100> frame_hist, render_hist, gui_hist, present_hist;
     };
     inline std::unique_ptr<GuiData> imgui;

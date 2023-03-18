@@ -46,7 +46,6 @@ namespace tofu
     }
 
     // Bucle de la aplicación
-    using update_fun_t = std::function<void()>;
     inline bool update(update_fun_t render = []{}, update_fun_t gui_render = []{}, update_fun_t compute = []{}) {
         // Metricas de debug
         #ifdef DEBUG
@@ -60,14 +59,15 @@ namespace tofu
         #endif
 
         // Limpiar la pantalla antes de seguir
-        glClearDepth(1.0f);
-        glClearColor(0.05f, 0.0f, 0.2f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         for (auto& [k, f] : gl->framebuffers) {
             glBindFramebuffer(GL_FRAMEBUFFER, f.fbo);
             glClearColor(f.clear.r, f.clear.g, f.clear.b, f.clear.a);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glClearDepth(1.0f);
+        glClearColor(0.05f, 0.0f, 0.2f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Funciones de computo
         compute();

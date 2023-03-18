@@ -42,7 +42,7 @@ namespace tofu
             ui32 nuevo;
             glGenBuffers(1, &nuevo);
             glBindBuffer(GL_COPY_WRITE_BUFFER, nuevo);
-            glBufferData(GL_COPY_WRITE_BUFFER, tam_nuevo * buf.bytes, nullptr, GL_DYNAMIC_DRAW);
+            glBufferData(GL_COPY_WRITE_BUFFER, tam_nuevo * buf.bytes, nullptr, buf.modo);
 
             // Copiar datos al principio
             glCopyBufferSubData(GL_COPY_READ_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, buf.tam * buf.bytes);
@@ -272,7 +272,7 @@ namespace tofu
                 std::exit(-1);
             }
 
-            ui32 buffer = buffer::crear(GL_TEXTURE_BUFFER, datos, GL_STATIC_DRAW);
+            ui32 buffer = buffer::crear(GL_TEXTURE_BUFFER, datos, GL_DYNAMIC_COPY);
             ui32 textura = textura::crear(GL_TEXTURE_BUFFER, formato, 0, texbuffer_offset);
             return {buffer, textura};
         }

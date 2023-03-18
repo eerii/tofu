@@ -29,6 +29,8 @@ namespace tofu
     using str = std::string;
     using str_view = std::string_view;
 
+    using update_fun_t = std::function<void()>;
+
     // Estructura de un shader
     struct OpcionesShader {
         bool blend = true;

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 
 #include "debug.h"
 
@@ -13,17 +14,15 @@ namespace tofu
 {
     namespace detail
     {
-        inline str leerArchivo(fs::path path) {
+        inline std::optional<str> leerArchivo(fs::path path) {
             // Comprobamos que el directorio existe
-            if (not fs::exists(path)) {
-                log::error("No existe el archivo especificado: {}", path.string());
-                std::exit(-1);
-            }
+            if (not fs::exists(path))
+                return std::nullopt;
 
             // Abrimos el fichero
             std::ifstream in(path.string());
             if (not in.is_open()) {
-                log::error("No se ha podido abrir el fichero: {}", path.string());
+                log::error("No se ha podido abrir el archivo: {}", path.string());
                 std::exit(-1);
             }
 
@@ -52,23 +51,41 @@ namespace tofu
             debug::gl();
         }
 
-        inline ui32 cargarShader(str vert, str frag) {
-            // Creamos los shaders de vértice y fragmento
-            ui32 vid = glCreateShader(GL_VERTEX_SHADER);
-            ui32 fid = glCreateShader(GL_FRAGMENT_SHADER);
+        inline ui32 cargarShader(str nombre, const std::vector<str>& transform_feedback_var = {}) {
+            ui32 pid = glCreateProgram();
+            ui32 vid, fid, gid;
 
             // Leemos los ficheros de shaders
-            str vsrc = leerArchivo(fs::current_path() / vert);
-            str fsrc = leerArchivo(fs::current_path() / frag);
+            auto vsrc = leerArchivo(fs::current_path() / (nombre + ".vert"));
+            auto fsrc = leerArchivo(fs::current_path() / (nombre + ".frag"));
+            auto gsrc = leerArchivo(fs::current_path() / (nombre + ".geom"));
 
-            // Compilamos los shaders
-            compilarShader(vid, vsrc);
-            compilarShader(fid, fsrc);
+            // Creamos las shaders y las añadimos al programa
+            if (vsrc) {
+                vid = glCreateShader(GL_VERTEX_SHADER);
+                compilarShader(vid, *vsrc);
+                glAttachShader(pid, vid);
+            } else {
+                log::error("No se ha encontrado el shader de vértices: {}", nombre);
+                std::exit(-1);
+            }
+            if (fsrc) {
+                fid = glCreateShader(GL_FRAGMENT_SHADER);
+                compilarShader(fid, *fsrc);
+                glAttachShader(pid, fid);
+            }
+            if (gsrc) {
+                gid = glCreateShader(GL_GEOMETRY_SHADER);
+                compilarShader(gid, *gsrc);
+                glAttachShader(pid, gid);
+                if (transform_feedback_var.size() > 0) {
+                    std::vector<const char*> tf_var_c;
+                    std::transform(transform_feedback_var.begin(), transform_feedback_var.end(), std::back_inserter(tf_var_c), [](const str& s) { return s.c_str(); });
+                    glTransformFeedbackVaryings(pid, tf_var_c.size(), tf_var_c.data(), GL_INTERLEAVED_ATTRIBS);
+                }
+            }
 
-            // Vinculamos los shaders en un programa
-            ui32 pid = glCreateProgram();
-            glAttachShader(pid, vid);
-            glAttachShader(pid, fid);
+            // Vinculamos el programa
             glLinkProgram(pid);
 
             // Comprobamos que no haya errores
@@ -82,10 +99,18 @@ namespace tofu
             }
 
             // Eliminamos los shaders ya que ya no los necesitamos
-            glDetachShader(pid, vid);
-            glDetachShader(pid, fid);
-            glDeleteShader(vid);
-            glDeleteShader(fid);
+            if (vsrc) {
+                glDetachShader(pid, vid);
+                glDeleteShader(vid);
+            }
+            if (fsrc) {
+                glDetachShader(pid, fid);
+                glDeleteShader(fid);
+            }
+            if (gsrc) {
+                glDetachShader(pid, gid);
+                glDeleteShader(gid);
+            }
 
             // Cargamos el programa por defecto
             glUseProgram(pid);
@@ -98,9 +123,9 @@ namespace tofu
     namespace shader
     {
         // Cargar una shader en el programa
-        inline void cargar(str nombre, str vao = "main", ui32 fbo = 0, OpcionesShader opt = {}) {
+        inline void cargar(str nombre, str vao = "main", ui32 fbo = 0, OpcionesShader opt = {}, std::vector<str> transform_feedback_var = {}) {
             Shader s {
-                .pid = detail::cargarShader("shaders/" + nombre + ".vert", "shaders/" + nombre + ".frag"),
+                .pid = detail::cargarShader("shaders/" + nombre, transform_feedback_var),
                 .vao = vao,
                 .fbo = fbo,
                 .opt = opt
