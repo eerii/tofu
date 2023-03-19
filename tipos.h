@@ -11,6 +11,8 @@
 #include <map>
 #include <unordered_map>
 
+#include <thread>
+
 #include <glad.h>
 #include <glfw3.h>
 
@@ -102,7 +104,7 @@ namespace tofu
     };
 
     // Estructura de datos de OpenGL
-    struct GL {
+    inline struct GL {
         GLFWwindow* win;
         glm::ivec2 tam_win, tam_fb;
         ui32 max_tex_size;
@@ -123,6 +125,7 @@ namespace tofu
 
         glm::mat4 view;
         glm::mat4 proj;
-    };
-    inline std::unique_ptr<GL> gl;
+    } gl;
+
+    inline double t, dt;
 }

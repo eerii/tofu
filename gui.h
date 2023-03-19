@@ -2,6 +2,10 @@
 // Utiliza ImGui para mostrar una interfaz de desarrollo donde configurar parámetros e imprimir datos
 #pragma once
 
+#ifndef DEBUG
+#define DISABLE_GUI
+#endif
+
 // Permite deshabilitar por completo la integración con ImGui
 #ifndef DISABLE_GUI
 
@@ -52,7 +56,7 @@ namespace tofu
             imgui->io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable; // Permite sacar las ventanas fuera de la aplicación
 
             // Inicializamos los backends necesarios (GLFW y OpenGL 3.3)
-            ImGui_ImplGlfw_InitForOpenGL(gl->win, true);
+            ImGui_ImplGlfw_InitForOpenGL(gl.win, true);
             ImGui_ImplOpenGL3_Init("#version 330 core");
         }
 

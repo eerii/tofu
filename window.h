@@ -43,13 +43,13 @@ namespace tofu
 
     // Ajustar perspectiva
     inline void ajustarPerspectiva(int w, int h) {
-        gl->proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 10000.f);
-        gl->proj[1][1] *= -1;
+        gl.proj = glm::perspective(glm::radians(45.f), (float)w / (float)h, 0.1f, 10000.f);
+        gl.proj[1][1] *= -1;
     }
 
     // Callback de cambio de tamaño de ventana
     inline void windowSizeCallback(GLFWwindow* win, int w, int h) {
-        if (gl->tam_win.x == w and gl->tam_win.y == h)
+        if (gl.tam_win.x == w and gl.tam_win.y == h)
             return;
 
         // Ajuste de la matriz de perspectiva
@@ -58,7 +58,7 @@ namespace tofu
         // Guardamos el tamaño de la ventana
         // El tamaño del framebuffer principal (usado para glViewport) puede ser diferente al tamaño de la ventana
         // Por ejemplo, al trabajar con pantallas HiDPI. Por eso utilzamos una función específica de glfw para guardarlo por separado
-        gl->tam_win = {w, h};
-        glfwGetFramebufferSize(win, &gl->tam_fb.x, &gl->tam_fb.y);
+        gl.tam_win = {w, h};
+        glfwGetFramebufferSize(win, &gl.tam_fb.x, &gl.tam_fb.y);
     }
 }

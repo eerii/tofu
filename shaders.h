@@ -130,36 +130,36 @@ namespace tofu
                 .fbo = fbo,
                 .opt = opt
             };
-            gl->shaders[nombre] = s;
+            gl.shaders[nombre] = s;
             glUseProgram(0);
         }
 
         // Usar una shader
         inline void usar(str nombre = "") {
-            if (gl->shader_actual == nombre)
+            if (gl.shader_actual == nombre)
                 return;
             
-            gl->shader_actual = nombre;
+            gl.shader_actual = nombre;
             if (nombre.empty()) {
                 glUseProgram(0);
                 return;
             }
             
             // Cambiamos la shader;
-            if (not gl->shaders.count(nombre)) {
+            if (not gl.shaders.count(nombre)) {
                 log::error("No existe el shader especificado: {}", nombre);
                 std::exit(-1);
             }
-            Shader& s = gl->shaders[nombre];
+            Shader& s = gl.shaders[nombre];
             glUseProgram(s.pid);
-            glBindVertexArray(gl->VAOs[s.vao].vao);
+            glBindVertexArray(gl.VAOs[s.vao].vao);
            
             // Cambiamos el framebuffer
             if (s.fbo == 0) {
                 glBindFramebuffer(GL_FRAMEBUFFER, 0);
-                glViewport(0, 0, gl->tam_fb.x, gl->tam_fb.y);
+                glViewport(0, 0, gl.tam_fb.x, gl.tam_fb.y);
             } else {
-                Framebuffer& fb = gl->framebuffers[s.fbo];
+                Framebuffer& fb = gl.framebuffers[s.fbo];
                 glBindFramebuffer(GL_FRAMEBUFFER, s.fbo > 0 ? fb.fbo : 0);
                 glViewport(0, 0, fb.tam.x, fb.tam.y);
             }
@@ -175,56 +175,56 @@ namespace tofu
         // Actualizar el valor de un uniform en la shader specificada
         template <typename T>
         void uniform(str nombre, T valor) {
-            str& shader = gl->shader_actual;
+            str& shader = gl.shader_actual;
             if (shader.empty()) {
                 log::error("No se ha especificado una shader para actualizar el uniform: '{}'", nombre);
                 std::exit(-1);
             }
 
             // Si no hemos registrado el uniform, obtenemos su localización
-            if (not gl->shaders[shader].uniforms.count(nombre))
-                gl->shaders[shader].uniforms[nombre] = glGetUniformLocation(gl->shaders[shader].pid, nombre.c_str());
+            if (not gl.shaders[shader].uniforms.count(nombre))
+                gl.shaders[shader].uniforms[nombre] = glGetUniformLocation(gl.shaders[shader].pid, nombre.c_str());
 
             // Uniforms básicos
             if constexpr (std::is_same_v<T, int>) {
-                glUniform1i(gl->shaders[shader].uniforms[nombre], valor);
+                glUniform1i(gl.shaders[shader].uniforms[nombre], valor);
             } else if constexpr (std::is_same_v<T, ui32>) {
-                glUniform1ui(gl->shaders[shader].uniforms[nombre], valor);
+                glUniform1ui(gl.shaders[shader].uniforms[nombre], valor);
             } else if constexpr (std::is_same_v<T, float>) {
-                glUniform1f(gl->shaders[shader].uniforms[nombre], valor);
+                glUniform1f(gl.shaders[shader].uniforms[nombre], valor);
             } else if constexpr (std::is_same_v<T, glm::vec2>) {
-                glUniform2f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y);
+                glUniform2f(gl.shaders[shader].uniforms[nombre], valor.x, valor.y);
             } else if constexpr (std::is_same_v<T, glm::vec3>) {
-                glUniform3f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z);
+                glUniform3f(gl.shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z);
             } else if constexpr (std::is_same_v<T, glm::vec4>) {
-                glUniform4f(gl->shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z, valor.w);
+                glUniform4f(gl.shaders[shader].uniforms[nombre], valor.x, valor.y, valor.z, valor.w);
             } else if constexpr (std::is_same_v<T, glm::mat4>) {
-                glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], 1, GL_FALSE, glm::value_ptr(valor));
+                glUniformMatrix4fv(gl.shaders[shader].uniforms[nombre], 1, GL_FALSE, glm::value_ptr(valor));
             } 
 
             // Arrays de uniforms
             else if constexpr (std::is_same_v<T, std::vector<int>>) {
-                glUniform1iv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+                glUniform1iv(gl.shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
             } else if constexpr (std::is_same_v<T, std::vector<ui32>>) {
-                glUniform1uiv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+                glUniform1uiv(gl.shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
             } else if constexpr (std::is_same_v<T, std::vector<float>>) {
-                glUniform1fv(gl->shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
+                glUniform1fv(gl.shaders[shader].uniforms[nombre], valor.size(), &valor[0]);
             } else if constexpr (std::is_same_v<T, std::vector<glm::vec2>>) {
-                glUniform2fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+                glUniform2fv(gl.shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::vec3>>) {
-                glUniform3fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+                glUniform3fv(gl.shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::vec4>>) {
-                glUniform4fv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+                glUniform4fv(gl.shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::ivec4>>) {
-                glUniform4iv(gl->shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
+                glUniform4iv(gl.shaders[shader].uniforms[nombre], valor.size(), glm::value_ptr(valor[0]));
             } else if constexpr (std::is_same_v<T, std::vector<glm::mat4>>) {
-                glUniformMatrix4fv(gl->shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
+                glUniformMatrix4fv(gl.shaders[shader].uniforms[nombre], valor.size(), GL_FALSE, glm::value_ptr(valor[0]));
             } 
 
             // Texture buffers
             else if constexpr (std::is_same_v<T, TexBuffer>) {
-                Buffer &buf = gl->buffers[valor.b];
-                Textura &tex = gl->texturas[valor.t];
+                Buffer &buf = gl.buffers[valor.b];
+                Textura &tex = gl.texturas[valor.t];
                 if (tex.target != GL_TEXTURE_BUFFER) {
                     log::error("El uniform '{}' no es un texture buffer", nombre);
                     std::exit(-1);
@@ -232,7 +232,7 @@ namespace tofu
                 glActiveTexture(GL_TEXTURE0 + valor.t);
                 glBindTexture(GL_TEXTURE_BUFFER, tex.textura);
                 glTexBuffer(GL_TEXTURE_BUFFER, tex.formato, buf.buffer);
-                glUniform1i(gl->shaders[shader].uniforms[nombre], valor.t);
+                glUniform1i(gl.shaders[shader].uniforms[nombre], valor.t);
             } 
 
             // Tipo no soportado

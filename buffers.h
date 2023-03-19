@@ -28,14 +28,14 @@ namespace tofu
             }
             debug::gl();
 
-            ui32 id = gl->buffers.size();
-            gl->buffers[id] = buf;
+            ui32 id = gl.buffers.size();
+            gl.buffers[id] = buf;
             return id;
         }
 
         // Redimensionar un buffer usando copy buffers
         inline void redimensionar(ui32 buffer, ui32 tam_nuevo) {
-            Buffer& buf = gl->buffers[buffer];
+            Buffer& buf = gl.buffers[buffer];
             glBindBuffer(GL_COPY_READ_BUFFER, buf.buffer);
 
             // Crear nuevo buffer
@@ -60,7 +60,7 @@ namespace tofu
         // Cargar datos en un buffer
         template <typename T>
         void cargar(ui32 buffer, std::vector<T> datos, ui32 pos = 0) {
-            Buffer& buf = gl->buffers[buffer];
+            Buffer& buf = gl.buffers[buffer];
             ui32 tam = datos.size();
             
             // Redimensionar el buffer si es necesario
@@ -77,25 +77,25 @@ namespace tofu
         // Inicializamos los buffers principales de OpenGL
         inline void iniciarVAO(std::vector<ui32> attr, str n = "main", ui32 vert_alloc = 0, ui32 ind_alloc = 0) {
             // VAO
-            glGenVertexArrays(1, &gl->VAOs[n].vao);
+            glGenVertexArrays(1, &gl.VAOs[n].vao);
 
             // Creamos los buffers de vértices e índices
-            gl->VAOs[n].vbo = crear(GL_ARRAY_BUFFER, std::vector<float>(vert_alloc), GL_STATIC_DRAW);
-            gl->VAOs[n].ebo = crear(GL_ELEMENT_ARRAY_BUFFER, std::vector<ui32>(ind_alloc), GL_STATIC_DRAW);
+            gl.VAOs[n].vbo = crear(GL_ARRAY_BUFFER, std::vector<float>(vert_alloc), GL_STATIC_DRAW);
+            gl.VAOs[n].ebo = crear(GL_ELEMENT_ARRAY_BUFFER, std::vector<ui32>(ind_alloc), GL_STATIC_DRAW);
 
             // Guardamos los atributos del VAO
-            gl->VAOs[n].atributos = attr;
+            gl.VAOs[n].atributos = attr;
 
             debug::gl();
         }
 
         // Configurar el VAO y sus atributos
         inline void configurarVAO(str n) {
-            if (gl->VAOs.find(n) == gl->VAOs.end()) {
+            if (gl.VAOs.find(n) == gl.VAOs.end()) {
                 log::error("No existe el VAO " + n);
                 std::exit(-1);
             }
-            VAO& v = gl->VAOs[n];
+            VAO& v = gl.VAOs[n];
             if (v.atributos.size() == 0) {
                 log::error("No se han especificado los atributos del VAO");
                 std::exit(-1);
@@ -117,7 +117,7 @@ namespace tofu
         inline Geometria ultimaPosVert() {
             Geometria pos = {0, 0, 0, 0, 0};
             ui32 max_i = 0;
-            for (auto& [n, p] : gl->geometrias) {
+            for (auto& [n, p] : gl.geometrias) {
                 if (p.voff + p.vcount > max_i) {
                     max_i = p.voff + p.vcount;
                     pos = p;
@@ -129,7 +129,7 @@ namespace tofu
         // Cargar los datos de los vértices en la GPU (sin índices)
         inline void cargarVert(str nombre, std::vector<float> vertices, str vao = "main", ui32 tipo_dibujo = GL_TRIANGLES) {
             // Activar el VAO
-            glBindVertexArray(gl->VAOs[vao].vao);
+            glBindVertexArray(gl.VAOs[vao].vao);
 
             // Obtener últimas posiciones utilizadas
             Geometria pos = ultimaPosVert();
@@ -139,10 +139,10 @@ namespace tofu
             pos.tipo_dibujo = tipo_dibujo;
 
             // Añadir vértices
-            cargar(gl->VAOs[vao].vbo, vertices, pos.voff);
+            cargar(gl.VAOs[vao].vbo, vertices, pos.voff);
 
             // Guardar la posición de la geometría
-            gl->geometrias[nombre] = pos;
+            gl.geometrias[nombre] = pos;
 
             debug::gl();
             configurarVAO(vao);
@@ -151,7 +151,7 @@ namespace tofu
         // Cargar los datos de los vértices en la GPU (con índices)
         inline void cargarVert(str nombre, std::pair<std::vector<float>, std::vector<ui32>> vertices, str vao = "main", ui32 tipo_dibujo = GL_TRIANGLES) {
             // Activar el VAO
-            glBindVertexArray(gl->VAOs[vao].vao);
+            glBindVertexArray(gl.VAOs[vao].vao);
 
             // Obtener últimas posiciones utilizadas
             Geometria pos = ultimaPosVert();
@@ -162,11 +162,11 @@ namespace tofu
             pos.tipo_dibujo = tipo_dibujo;
 
             // Añadir vértices e índices
-            cargar(gl->VAOs[vao].vbo, vertices.first, pos.voff);
-            cargar(gl->VAOs[vao].ebo, vertices.second, pos.ioff);
+            cargar(gl.VAOs[vao].vbo, vertices.first, pos.voff);
+            cargar(gl.VAOs[vao].ebo, vertices.second, pos.ioff);
 
             // Guardar la posición de la geometría
-            gl->geometrias[nombre] = pos;
+            gl.geometrias[nombre] = pos;
 
             debug::gl();
             configurarVAO(vao);
@@ -178,7 +178,7 @@ namespace tofu
         // Crea una textura
         inline ui32 crear(ui32 target, ui32 formato, ui32 tipo, ui32 i_offset = 0, glm::ivec2 tam = glm::ivec2(0, 0)) {
             ui32 indice = i_offset;
-            for (auto& [i, t] : gl->texturas)
+            for (auto& [i, t] : gl.texturas)
                 if (i == indice)
                     indice++;
 
@@ -192,7 +192,7 @@ namespace tofu
             glGenTextures(1, &tex.textura);
             debug::gl();
 
-            gl->texturas[indice] = tex;
+            gl.texturas[indice] = tex;
             return indice;
         }
 
@@ -293,15 +293,15 @@ namespace tofu
             // - Su tamaño y determina si es 1D o 2D
             // - Si su tamaño en x es mayor que el tamaño máximo de una textura, creamos un array
             ui32 dimension = tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
-            if (tam.x > gl->max_tex_size) {
+            if (tam.x > gl.max_tex_size) {
                 dimension = tam.y < 2 ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_2D_ARRAY;
-                fb.tam.z = tam.x / gl->max_tex_size;
-                fb.tam.x = gl->max_tex_size;
+                fb.tam.z = tam.x / gl.max_tex_size;
+                fb.tam.x = gl.max_tex_size;
             }
 
             // Creamos la textura
             fb.tex = textura::crear(dimension, GL_RGBA32F, 0);
-            Textura& tex = gl->texturas[fb.tex];
+            Textura& tex = gl.texturas[fb.tex];
             glBindTexture(dimension, tex.textura);
 
             if (dimension == GL_TEXTURE_1D) { // 1D
@@ -328,8 +328,8 @@ namespace tofu
 
             debug::gl();
 
-            ui32 id = gl->buffers.size() + 1;
-            gl->framebuffers[id] = fb;
+            ui32 id = gl.buffers.size() + 1;
+            gl.framebuffers[id] = fb;
             return id;
         }
     }

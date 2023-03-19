@@ -1,10 +1,15 @@
 // Generador de geometría
 #pragma once
 
-#include "debug.h"
+#include <vector>
+#include <array>
+#include <cmath>
+#include <stdint.h>
 
 namespace tofu
 {
+    using ui32 = std::uint32_t;
+
     namespace detail
     {
         // Generador de puntos de fibonacci para la esfera
@@ -106,11 +111,6 @@ namespace tofu
         // Esfera a partir de octaedro
         // Creamos las subdivisiones dividiendo cada arista n veces, no como se hace tradicionalmente, para tener más control sobre la división
         inline auto esferaOct(ui32 n) {
-            if (n < 1) {
-                log::error("El nivel de subdivisión debe ser mayor o igual a 1");
-                std::exit(1);
-            }
-
             using V = std::array<float, 3>;
             using I = std::array<ui32, 3>;
             auto& ov = detail::oct_vert;
