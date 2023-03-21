@@ -27,27 +27,27 @@ const float raton_max = 0.08f;
 
 inline void camara() {
     // Movimiento delante-detras
-    if (gl->io.teclas[GLFW_KEY_W].mantenida)
+    if (gl.io.teclas[GLFW_KEY_W].mantenida)
         cam_vel += cam_front * aceleracion;
-    if (gl->io.teclas[GLFW_KEY_S].mantenida)
+    if (gl.io.teclas[GLFW_KEY_S].mantenida)
         cam_vel += cam_front * -aceleracion;
-    if (not gl->io.teclas[GLFW_KEY_W].mantenida and not gl->io.teclas[GLFW_KEY_S].mantenida)
+    if (not gl.io.teclas[GLFW_KEY_W].mantenida and not gl.io.teclas[GLFW_KEY_S].mantenida)
         cam_vel.x *= deceleracion;
 
     // Movimiento izquierda-derecha
-    if (gl->io.teclas[GLFW_KEY_D].mantenida)
+    if (gl.io.teclas[GLFW_KEY_D].mantenida)
         cam_vel += cam_right * aceleracion;
-    if (gl->io.teclas[GLFW_KEY_A].mantenida)
+    if (gl.io.teclas[GLFW_KEY_A].mantenida)
         cam_vel += cam_right * -aceleracion;
-    if (not gl->io.teclas[GLFW_KEY_A].mantenida and not gl->io.teclas[GLFW_KEY_D].mantenida)
+    if (not gl.io.teclas[GLFW_KEY_A].mantenida and not gl.io.teclas[GLFW_KEY_D].mantenida)
         cam_vel.z *= deceleracion;
 
     // Movimiento arriba-abajo
-    if (gl->io.teclas[GLFW_KEY_X].mantenida)
+    if (gl.io.teclas[GLFW_KEY_X].mantenida)
         cam_vel += cam_up * aceleracion;
-    if (gl->io.teclas[GLFW_KEY_SPACE].mantenida)
+    if (gl.io.teclas[GLFW_KEY_SPACE].mantenida)
         cam_vel += cam_up * -aceleracion;
-    if (not gl->io.teclas[GLFW_KEY_X].mantenida and not gl->io.teclas[GLFW_KEY_SPACE].mantenida)
+    if (not gl.io.teclas[GLFW_KEY_X].mantenida and not gl.io.teclas[GLFW_KEY_SPACE].mantenida)
         cam_vel.y *= deceleracion;
 
     // Velocidad máxima
@@ -59,14 +59,14 @@ inline void camara() {
     // Aplicar velocidad
     cam_pos += cam_vel;
 
-    if (gl->raton_conectado) {
+    if (gl.raton_conectado) {
         // Yaw - Ratón X
-        float cam_yaw_d = gl->io.mouse.xoff * acc_raton;
+        float cam_yaw_d = gl.io.mouse.xoff * acc_raton;
         cam_yaw += std::clamp(cam_yaw_d, -raton_max, raton_max);
         cam_yaw = std::fmod(cam_yaw, 2.f * M_PI);
 
         // Pitch - Ratón Y
-        float cam_pitch_d = gl->io.mouse.yoff * acc_raton;
+        float cam_pitch_d = gl.io.mouse.yoff * acc_raton;
         cam_pitch += std::clamp(cam_pitch_d, -raton_max, raton_max);
         cam_pitch = std::clamp(cam_pitch, 0.f, (float)M_PI);
     }
@@ -76,5 +76,5 @@ inline void camara() {
     cam_right = glm::normalize(glm::cross(cam_front, cam_up));
 
     // Matriz de cámara
-    gl->view = glm::lookAt(cam_pos, cam_pos + cam_front, cam_up);
+    gl.view = glm::lookAt(cam_pos, cam_pos + cam_front, cam_up);
 }

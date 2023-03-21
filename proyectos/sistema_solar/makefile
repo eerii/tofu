@@ -11,20 +11,20 @@ EXECUTABLE_NAME=main
 # Carpetas de salida
 BIN=bin
 OBJ=$(BIN)/obj
-LIB=../../Librerias
+ROOT_DIR=../..
+LIB=$(ROOT_DIR)/lib
 
 # Archivos cabecera (.h)
-HEADER_DIR=.
 INCLUDES= \
-	-I$(HEADER_DIR) \
-	-I$(LIB)/tofu \
+	-I. \
+	-I$(ROOT_DIR) \
 	-I$(LIB)/glad \
 	-I$(LIB)/imgui \
 	-I$(LIB)/imgui/backends \
-	-I$(LIB)/imgui_zmo/imGuIZMO.quat \
+	-I$(LIB)/imguizmo/imGuIZMO.quat \
 	-I/usr/local/include \
 	-I/usr/local/include/GLFW
-HEADER_FILES=$(wildcard $(HEADER_DIR)/*.h) $(wildcard lib/tofu/*.h)
+HEADER_FILES=$(wildcard ./*.h) $(wildcard $(ROOT_DIR)/*.h)
 
 # Archivos fuente (.cpp)
 SRC=.
@@ -90,7 +90,7 @@ $(IMGUI_BACKENDS): $(OBJ)/%.o : $(LIB)/imgui/backends/%.cpp
 	@echo "Compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-$(IMGUI_ZMO): $(OBJ)/%.o : $(LIB)/imgui_zmo/imGuIZMO.quat/%.cpp
+$(IMGUI_ZMO): $(OBJ)/%.o : $(LIB)/imguizmo/imGuIZMO.quat/%.cpp
 	@echo "Compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ -DVGIZMO_USES_GLM -DIMGUIZMO_IMGUI_FOLDER=""

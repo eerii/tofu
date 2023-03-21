@@ -49,9 +49,6 @@ int base, torre, brazo, cable;
 TexBuffer buf_modelo;
 TexBuffer buf_color;
 
-// Tiempo
-float t = 0.0f;
-
 // ---
 
 int nuevoObjeto(glm::vec3 pos, glm::vec3 escala, glm::vec3 color, int padre = -1, PosicionamientoRelativo rel = POS_CENTRO) {
@@ -161,41 +158,41 @@ void actualizarColoresObjetos() {
 
 void controlarGrua() {
     // Mover base
-    if (gl->io.teclas[GLFW_KEY_UP].mantenida)
+    if (gl.io.teclas[GLFW_KEY_UP].mantenida)
         objetos[base].pos_rel.z -= 0.1f;
-    if (gl->io.teclas[GLFW_KEY_DOWN].mantenida)
+    if (gl.io.teclas[GLFW_KEY_DOWN].mantenida)
         objetos[base].pos_rel.z += 0.1f;
-    if (gl->io.teclas[GLFW_KEY_LEFT].mantenida)
+    if (gl.io.teclas[GLFW_KEY_LEFT].mantenida)
         objetos[base].pos_rel.x -= 0.1f;
-    if (gl->io.teclas[GLFW_KEY_RIGHT].mantenida)
+    if (gl.io.teclas[GLFW_KEY_RIGHT].mantenida)
         objetos[base].pos_rel.x += 0.1f;
 
     // Mover torre
-    if (gl->io.teclas[GLFW_KEY_H].mantenida)
+    if (gl.io.teclas[GLFW_KEY_H].mantenida)
         objetos[torre].angulo += 0.1f;
-    if (gl->io.teclas[GLFW_KEY_J].mantenida)
+    if (gl.io.teclas[GLFW_KEY_J].mantenida)
         objetos[torre].angulo -= 0.1f;
-    if (gl->io.teclas[GLFW_KEY_U].mantenida)
+    if (gl.io.teclas[GLFW_KEY_U].mantenida)
         objetos[torre].escala.y = std::clamp(objetos[torre].escala.y + 0.05f, 3.f, 10.f);
-    if (gl->io.teclas[GLFW_KEY_Y].mantenida)
+    if (gl.io.teclas[GLFW_KEY_Y].mantenida)
         objetos[torre].escala.y = std::clamp(objetos[torre].escala.y - 0.05f, 3.f, 10.f);
 
     // Mover brazo
-    if (gl->io.teclas[GLFW_KEY_K].mantenida and objetos[brazo].escala.x < 12.f) {
+    if (gl.io.teclas[GLFW_KEY_K].mantenida and objetos[brazo].escala.x < 12.f) {
         objetos[brazo].escala.x += 0.1f;
         objetos[brazo].pos_rel.x -= 0.1f;
         objetos[cable].pos_rel.x -= 0.1f;
     }
-    if (gl->io.teclas[GLFW_KEY_L].mantenida and objetos[brazo].escala.x > 6.f) {
+    if (gl.io.teclas[GLFW_KEY_L].mantenida and objetos[brazo].escala.x > 6.f) {
         objetos[brazo].escala.x -= 0.1f;
         objetos[brazo].pos_rel.x += 0.1f;
         objetos[cable].pos_rel.x += 0.1f;
     }
 
     // Mover cable
-    if (gl->io.teclas[GLFW_KEY_I].mantenida)
+    if (gl.io.teclas[GLFW_KEY_I].mantenida)
         objetos[cable].escala.y -= 0.1f;
-    if (gl->io.teclas[GLFW_KEY_O].mantenida)
+    if (gl.io.teclas[GLFW_KEY_O].mantenida)
         objetos[cable].escala.y += 0.1f;
     if (objetos[cable].escala.y < 2.f)
         objetos[cable].escala.y = 2.f;
@@ -209,13 +206,12 @@ void controlarGrua() {
 
 void render() {
     // Variables
-    t = glfwGetTime();
     camara();
     controlarGrua();
 
     // Shader y uniforms
     shader::usar("grua");
-    shader::uniform("viewproj", gl->proj * gl->view);
+    shader::uniform("viewproj", gl.proj * gl.view);
     
     // Dibujar objetos por instancias
     dibujar(objetos.size(), "cubo");
