@@ -1,0 +1,47 @@
+name: build projects 🔭
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+        project: [grua, sistema_solar]
+  
+    runs-on: ${{matrix.os}}
+
+    env:
+      PROJ: proyectos/${{matrix.project}}
+
+    steps:
+    - name: clone
+      uses: actions/checkout@v3
+      with:
+        submodules: recursive
+
+    - name: install dependencies (linux)
+      if: ${{matrix.os == 'ubuntu-latest'}}
+      run: sudo apt install xorg-dev
+      
+    - name: make
+      run: |
+        cd proyectos/${{matrix.project}}
+        make
+
+    - name: bundle resources
+      run: |
+        mkdir -p bundle
+        cp proyectos/${{matrix.project}}/bin/main* bundle
+        cp -r proyectos/${{matrix.project}}/shaders bundle
+
+    - name: store binary
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{matrix.project}}-${{matrix.os}}
+        path: bundle

@@ -44,10 +44,15 @@ GLAD_LIB=$(LIB_OUT)/libglad.a
 LDFLAGS:=$(LDFLAGS) -lglad
 
 GLFW_LIB=$(LIB_OUT)/glfw/build/src/libglfw3.a
-LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3 
-
+GLFW_CMAKE_FLAGS=
+LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3
 ifeq ($(shell uname), Darwin)
 	LDFLAGS:=$(LDFLAGS) -framework Cocoa -framework IOKit -framework CoreVideo
+else ifeq ($(shell uname), Linux)
+	
+else
+	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32
+	GLFW_CMAKE_FLAGS:=$(GLFW_CMAKE_FLAGS) -G Ninja
 endif
 
 IMGUI_LIB=$(LIB_OUT)/libimgui.a
@@ -60,6 +65,8 @@ LDFLAGS:=$(LDFLAGS) -limgui
 # ··········
 # · REGLAS ·
 # ··········
+
+# TODO: Copiar recursos (shaders, texturas, etc...)
 
 # Build
 build: $(EXECUTABLE_FILES)
@@ -74,7 +81,7 @@ clean-all: clean
 $(EXECUTABLE_FILES): $(OBJECT_FILES) $(GLAD_LIB) $(GLFW_LIB) $(IMGUI_LIB)
 	@echo "generando ejecutable"
 	@mkdir -p $(BIN)
-	@$(CC) $(LDFLAGS) $(INCLUDES) $^ -o $@ -v
+	$(CC) $(INCLUDES) $^ -o $@ $(LDFLAGS)
 	@echo "ejecutable generado en $@"
 
 # Librería Glad
@@ -91,7 +98,7 @@ $(OBJ)/glad.o : $(LIB)/glad/glad.c
 $(GLFW_LIB):
 	@echo "generando librería glfw"
 	@mkdir -p $(LIB_OUT)/glfw/build
-	@cmake -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DGLFW_INSTALL=OFF -S $(LIB)/glfw -B $(LIB_OUT)/glfw/build
+	@cmake -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DGLFW_INSTALL=OFF -S $(LIB)/glfw -B $(LIB_OUT)/glfw/build $(GLFW_CMAKE_FLAGS)
 	@cmake --build $(LIB_OUT)/glfw/build
 
 # Librería ImGui

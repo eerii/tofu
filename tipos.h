@@ -12,6 +12,7 @@
 #include <unordered_map>
 
 #include <thread>
+#include <functional>
 
 #include <glad.h>
 #include <glfw3.h>
@@ -19,6 +20,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace tofu 
 {
