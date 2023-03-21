@@ -31,7 +31,7 @@ namespace tofu
             return src;
         }
 
-        inline void compilarShader(ui32& id, str src) {
+        inline void compilarShader(str nombre, ui32& id, str src) {
             const char* src_c = src.c_str();
             int result, log_len;
 
@@ -45,7 +45,7 @@ namespace tofu
             if (log_len > 0) {
                 str error(log_len, ' ');
                 glGetShaderInfoLog(id, log_len, NULL, &error[0]);
-                log::warn("No se pudo compilar el shader: {}", error);
+                log::warn("No se pudo compilar el shader '{}': {}", nombre, error);
             }
 
             debug::gl();
@@ -63,7 +63,7 @@ namespace tofu
             // Creamos las shaders y las añadimos al programa
             if (vsrc) {
                 vid = glCreateShader(GL_VERTEX_SHADER);
-                compilarShader(vid, *vsrc);
+                compilarShader(nombre, vid, *vsrc);
                 glAttachShader(pid, vid);
             } else {
                 log::error("No se ha encontrado el shader de vértices: {}", nombre);
@@ -71,12 +71,12 @@ namespace tofu
             }
             if (fsrc) {
                 fid = glCreateShader(GL_FRAGMENT_SHADER);
-                compilarShader(fid, *fsrc);
+                compilarShader(nombre, fid, *fsrc);
                 glAttachShader(pid, fid);
             }
             if (gsrc) {
                 gid = glCreateShader(GL_GEOMETRY_SHADER);
-                compilarShader(gid, *gsrc);
+                compilarShader(nombre, gid, *gsrc);
                 glAttachShader(pid, gid);
                 if (transform_feedback_var.size() > 0) {
                     std::vector<const char*> tf_var_c;
@@ -95,7 +95,8 @@ namespace tofu
             if (log_len > 0) {
                 str error(log_len, ' ');
                 glGetProgramInfoLog(pid, log_len, NULL, &error[0]);
-                log::warn("No se pudo vincular el programa: {}", error);
+                log::error("No se pudo vincular el programa: {}", error);
+                std::exit(-1);
             }
 
             // Eliminamos los shaders ya que ya no los necesitamos
