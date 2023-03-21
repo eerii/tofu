@@ -5,25 +5,28 @@
 # Compilador y opciones
 CC=g++ -g
 CFLAGS=--std=c++17
-LDFLAGS=-L/usr/local/Cellar/glfw/3.3.8/lib -lglfw
+LDFLAGS=
 EXECUTABLE_NAME=main
 
 # Carpetas de salida
 BIN=bin
 OBJ=$(BIN)/obj
-ROOT_DIR=../..
-LIB=$(ROOT_DIR)/lib
+LIB_OUT=$(BIN)/lib
+LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)
 
 # Archivos cabecera (.h)
+ROOT_DIR=../..
+LIB=$(ROOT_DIR)/lib
 INCLUDES= \
 	-I. \
 	-I$(ROOT_DIR) \
 	-I$(LIB)/glad \
+	-I$(LIB)/glm \
+	-I$(LIB)/glfw/include \
+	-I$(LIB)/glfw/include/GLFW \
 	-I$(LIB)/imgui \
 	-I$(LIB)/imgui/backends \
-	-I$(LIB)/imguizmo/imGuIZMO.quat \
-	-I/usr/local/include \
-	-I/usr/local/include/GLFW
+	-I$(LIB)/imguizmo/imGuIZMO.quat
 HEADER_FILES=$(wildcard ./*.h) $(wildcard $(ROOT_DIR)/*.h)
 
 # Archivos fuente (.cpp)
@@ -37,15 +40,22 @@ OBJECT_FILES=$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCE_FILES))
 EXECUTABLE_FILES=$(BIN)/$(EXECUTABLE_NAME)
 
 # Librerías (.a)
-GLAD_LIB=$(LIB)/glad/libglad.a
-LDFLAGS:=$(LDFLAGS) -L$(LIB)/glad -lglad
+GLAD_LIB=$(LIB_OUT)/libglad.a
+LDFLAGS:=$(LDFLAGS) -lglad
 
-IMGUI_LIB=$(LIB)/imgui/libimgui.a
+GLFW_LIB=$(LIB_OUT)/glfw/build/src/libglfw3.a
+LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3 
+
+ifeq ($(shell uname), Darwin)
+	LDFLAGS:=$(LDFLAGS) -framework Cocoa -framework IOKit -framework CoreVideo
+endif
+
+IMGUI_LIB=$(LIB_OUT)/libimgui.a
 IMGUI_SOURCES=$(wildcard $(LIB)/imgui/*.cpp)
 IMGUI_OBJECTS=$(patsubst $(LIB)/imgui/%.cpp, $(OBJ)/%.o, $(IMGUI_SOURCES))
 IMGUI_BACKENDS=$(OBJ)/imgui_impl_glfw.o $(OBJ)/imgui_impl_opengl3.o
 IMGUI_ZMO=$(OBJ)/imGuIZMOquat.o
-LDFLAGS:=$(LDFLAGS) -L$(LIB)/imgui -limgui
+LDFLAGS:=$(LDFLAGS) -limgui
 
 # ··········
 # · REGLAS ·
@@ -61,43 +71,50 @@ clean-all: clean
 	@rm -rf $(BIN)
 
 # Construir ejecutable a partir de archivos de objecto (.o)
-$(EXECUTABLE_FILES): $(OBJECT_FILES) $(GLAD_LIB) $(IMGUI_LIB)
-	@echo "Generando ejecutable"
+$(EXECUTABLE_FILES): $(OBJECT_FILES) $(GLAD_LIB) $(GLFW_LIB) $(IMGUI_LIB)
+	@echo "generando ejecutable"
 	@mkdir -p $(BIN)
-	@$(CC) $(LDFLAGS) $(INCLUDES) $^ -o $@
-	@echo "Ejecutable generado en $@"
+	@$(CC) $(LDFLAGS) $(INCLUDES) $^ -o $@ -v
+	@echo "ejecutable generado en $@"
 
 # Librería Glad
 $(GLAD_LIB) : $(OBJ)/glad.o
-	@echo "Generando librería $@"
-	@mkdir -p $(LIB)
+	@echo "generando librería glad"
+	@mkdir -p $(LIB_OUT)
 	@ar rcs $@ $^
 $(OBJ)/glad.o : $(LIB)/glad/glad.c
-	@echo "Compilando $<"
+	@echo "compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
+# Librería Glfw (usa CMake)
+$(GLFW_LIB):
+	@echo "generando librería glfw"
+	@mkdir -p $(LIB_OUT)/glfw/build
+	@cmake -DGLFW_BUILD_EXAMPLES=OFF -DGLFW_BUILD_TESTS=OFF -DGLFW_BUILD_DOCS=OFF -DGLFW_INSTALL=OFF -S $(LIB)/glfw -B $(LIB_OUT)/glfw/build
+	@cmake --build $(LIB_OUT)/glfw/build
+
 # Librería ImGui
 $(IMGUI_LIB) : $(IMGUI_OBJECTS) $(IMGUI_BACKENDS) $(IMGUI_ZMO)
-	@echo "Generando librería $@"
-	@mkdir -p $(LIB)
+	@echo "generando librería imgui"
+	@mkdir -p $(LIB_OUT)
 	@ar rcs $@ $^
 $(IMGUI_OBJECTS) : $(OBJ)/%.o : $(LIB)/imgui/%.cpp
-	@echo "Compilando $<"
+	@echo "compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 $(IMGUI_BACKENDS): $(OBJ)/%.o : $(LIB)/imgui/backends/%.cpp
-	@echo "Compilando $<"
+	@echo "compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 $(IMGUI_ZMO): $(OBJ)/%.o : $(LIB)/imguizmo/imGuIZMO.quat/%.cpp
-	@echo "Compilando $<"
+	@echo "compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@ -DVGIZMO_USES_GLM -DIMGUIZMO_IMGUI_FOLDER=""
 
 # Construir archivos de objecto (.o) usando archivos fuente (.cpp)
 $(OBJECT_FILES): $(OBJ)/%.o : $(SRC)/%.cpp $(HEADER_FILES)
-	@echo "Compilando $<"
+	@echo "compilando $<"
 	@mkdir -p $(OBJ)
 	@$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
