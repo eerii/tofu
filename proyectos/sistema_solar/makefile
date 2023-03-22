@@ -51,7 +51,7 @@ ifeq ($(shell uname), Darwin)
 else ifeq ($(shell uname), Linux)
 	
 else
-	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32
+	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32 -static
 	GLFW_CMAKE_FLAGS:=$(GLFW_CMAKE_FLAGS) -G Ninja
 endif
 

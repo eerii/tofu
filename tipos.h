@@ -11,8 +11,9 @@
 #include <map>
 #include <unordered_map>
 
-#include <thread>
 #include <functional>
+#include <numeric>
+#include <memory>
 
 #include <glad.h>
 #include <glfw3.h>

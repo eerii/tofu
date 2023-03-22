@@ -19,8 +19,6 @@
 
 #include "debug.h"
 
-#include <numeric>
-
 namespace tofu
 {
     // Estructura para almacenar la información necesaria de ImGui
