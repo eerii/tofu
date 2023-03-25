@@ -49,9 +49,9 @@ LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3
 ifeq ($(shell uname), Darwin)
 	LDFLAGS:=$(LDFLAGS) -framework Cocoa -framework IOKit -framework CoreVideo
 else ifeq ($(shell uname), Linux)
-	
+	# ...	
 else
-	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32 -static
+	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32 -static -lpthread
 	GLFW_CMAKE_FLAGS:=$(GLFW_CMAKE_FLAGS) -G Ninja
 endif
 

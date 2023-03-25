@@ -43,6 +43,8 @@ enum PiezasImportantes {
     PIEZA_CABLE = 6
 };
 
+// Lista de piezas de la grua
+// Tienen que estar ordenadas por su dependencia de padres
 inline std::vector<PiezaGrua> piezas_grua = {
     { {0.f, 0.f, 0.f}, {60.f, 1.f, 60.f}, {0.3f, 0.2f, 0.5f} }, // Suelo
     { {0.f, -2.f, 0.f}, {3.f, 0.5f, 4.f}, {1.f, 1.f, 0.5f} }, // Base
@@ -58,7 +60,7 @@ inline std::vector<PiezaGrua> piezas_grua = {
 inline v3 posRelativa(ui32 pieza) {
     PiezaGrua& p = piezas_grua[pieza];
     PiezaGrua* padre = p.padre < 0 ? nullptr : &piezas_grua[p.padre];
-   
+
     v3 pos = p.pos_rel;
     switch (p.rel) {
         case POS_CENTRO:

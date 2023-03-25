@@ -84,10 +84,10 @@ void actualizarColoresObjetos() {
 
 void inputGrua() {
     // Mover base
-    controles.delante = gl.io.teclas[GLFW_KEY_UP].mantenida;
-    controles.detras = gl.io.teclas[GLFW_KEY_DOWN].mantenida;
-    controles.girar_der = gl.io.teclas[GLFW_KEY_LEFT].mantenida;
-    controles.girar_izq = gl.io.teclas[GLFW_KEY_RIGHT].mantenida;
+    controles.delante = gl.io.teclas[GLFW_KEY_W].mantenida;
+    controles.detras = gl.io.teclas[GLFW_KEY_S].mantenida;
+    controles.girar_der = gl.io.teclas[GLFW_KEY_D].mantenida;
+    controles.girar_izq = gl.io.teclas[GLFW_KEY_A].mantenida;
 
     // Mover torre
     controles.torre_der = gl.io.teclas[GLFW_KEY_H].mantenida;
