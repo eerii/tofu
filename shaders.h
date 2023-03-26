@@ -51,14 +51,15 @@ namespace tofu
             debug::gl();
         }
 
-        inline ui32 cargarShader(str nombre, const std::vector<str>& transform_feedback_var = {}) {
+        inline ui32 cargarShader(str nombre, const std::vector<str>& transform_feedback_var = {}) {    
             ui32 pid = glCreateProgram();
             ui32 vid, fid, gid;
 
             // Leemos los ficheros de shaders
-            auto vsrc = leerArchivo(fs::current_path() / (nombre + ".vert"));
-            auto fsrc = leerArchivo(fs::current_path() / (nombre + ".frag"));
-            auto gsrc = leerArchivo(fs::current_path() / (nombre + ".geom"));
+            fs::path shader_path = fs::path("shaders");
+            auto vsrc = leerArchivo(shader_path / (nombre + ".vert"));
+            auto fsrc = leerArchivo(shader_path / (nombre + ".frag"));
+            auto gsrc = leerArchivo(shader_path / (nombre + ".geom"));
 
             // Creamos las shaders y las añadimos al programa
             if (vsrc) {
@@ -126,7 +127,7 @@ namespace tofu
         // Cargar una shader en el programa
         inline void cargar(str nombre, str vao = "main", ui32 fbo = 0, OpcionesShader opt = {}, std::vector<str> transform_feedback_var = {}) {
             Shader s {
-                .pid = detail::cargarShader("shaders/" + nombre, transform_feedback_var),
+                .pid = detail::cargarShader(nombre, transform_feedback_var),
                 .vao = vao,
                 .fbo = fbo,
                 .opt = opt

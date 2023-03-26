@@ -229,7 +229,13 @@ void render() {
 // · PROGRAMA ·
 // ············
 
-int main() {
+int main(int arcg, char** argv) {
+    // Cambiamos el directorio actual por el del ejecutable
+    // Esto es necesario para que las rutas de los archivos sean correctas
+    fs::path path = fs::weakly_canonical(fs::path(argv[0])).parent_path();
+    fs::current_path(path);
+    log::info("Directorio actual: {}", path);
+
     // Iniciamos GLFW y OpenGL
     log::info("Iniciando OpenGL");
     initGL(WIDTH, HEIGHT, "Sistema Solar");
