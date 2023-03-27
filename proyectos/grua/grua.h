@@ -3,11 +3,50 @@
 #pragma once
 
 #include <array>
+#include <cmath>
 #include <vector>
 #include <cstdint>
 
-using v3 = std::array<float, 3>;
 using ui32 = std::uint32_t;
+
+struct v2 {
+    std::array<float, 2> v;
+   
+    v2 () { v = {0.f, 0.f}; }
+    v2 (float x, float y) { v = {x, y}; }
+
+    float& x() { return v[0]; }
+    float& y() { return v[1]; }
+
+    v2 operator+(v2 o) { return {v[0] + o.v[0], v[1] + o.v[1]}; }
+    v2& operator+=(v2 o) { v[0] += o.v[0]; v[1] += o.v[1]; return *this; }
+
+    v2 operator*(float s) { return {v[0] * s, v[1] * s}; }
+    v2& operator*=(float s) { v[0] *= s; v[1] *= s; return *this; }
+};
+
+struct v3 {
+    std::array<float, 3> v;
+    
+    v3 () { v = {0.f, 0.f, 0.f}; }
+    v3 (float x, float y, float z) { v = {x, y, z}; }
+
+    float& x() { return v[0]; }
+    float& y() { return v[1]; }
+    float& z() { return v[2]; }
+
+    v3 operator+(v3 o) { return {v[0] + o.v[0], v[1] + o.v[1], v[2] + o.v[2]}; }
+    v3& operator+=(v3 o) { v[0] += o.v[0]; v[1] += o.v[1]; v[2] += o.v[2]; return *this; }
+
+    v3 operator*(float s) { return {v[0] * s, v[1] * s, v[2] * s}; }
+    v3& operator*=(float s) { v[0] *= s; v[1] *= s; v[2] *= s; return *this; }
+};
+
+struct m4 {
+    std::array<float, 16> m;
+
+    m4 (std::array<float, 16> pm) : m(pm) {}
+};
 
 // Posiciones relativas de los objetos entre si
 enum PosicionamientoRelativo {
@@ -66,22 +105,22 @@ inline v3 posRelativa(ui32 pieza) {
         case POS_CENTRO:
             break;
         case POS_ENCIMA:
-            pos[1] -= padre->escala[1] + p.escala[1];
+            pos.y() -= padre->escala.y() + p.escala.y();
             break;
         case POS_DEBAJO:
-            pos[1] += padre->escala[1] + p.escala[1];
+            pos.y() += padre->escala.y() + p.escala.y();
             break;
         case POS_IZQUIERDA:
-            pos[0] -= padre->escala[0] + p.escala[0];
+            pos.x() -= padre->escala.x() + p.escala.x();
             break;
         case POS_DERECHA:
-            pos[0] += padre->escala[0] + p.escala[0];
+            pos.x() += padre->escala.x() + p.escala.x();
             break;
         case POS_DELANTE:
-            pos[2] -= padre->escala[2] + p.escala[2];
+            pos.z() -= padre->escala.z() + p.escala.z();
             break;
         case POS_DETRAS:
-            pos[2] += padre->escala[2] + p.escala[2];
+            pos.z() += padre->escala.z() + p.escala.z();
             break;
     }
 
@@ -93,15 +132,28 @@ inline struct Controles {
     bool torre_der, torre_izq, torre_arriba, torre_abajo;
     bool brazo_extender, brazo_contraer;
     bool cable_soltar, cable_recoger;
+    bool cam_delante, cam_detras, cam_der, cam_izq, cam_arriba, cam_abajo;
+    float raton_offx, raton_offy;
 } controles;
 
 // Controlar la grua
-void controlarGrua() {
+inline void controlarGrua() {
     // Mover base
-    if (controles.delante)
-        piezas_grua[PIEZA_BASE].pos_rel[2] -= 0.1f;
-    if (controles.detras)
-        piezas_grua[PIEZA_BASE].pos_rel[2] += 0.1f;
+    float dir_x = std::sin(piezas_grua[PIEZA_BASE].angulo);
+    float dir_z = std::cos(piezas_grua[PIEZA_BASE].angulo);
+
+    if (controles.delante) {
+        piezas_grua[PIEZA_BASE].pos_rel.x() += dir_x * 0.1f;
+        piezas_grua[PIEZA_BASE].pos_rel.z() += dir_z * 0.1f;
+    }
+    if (controles.detras) {
+        piezas_grua[PIEZA_BASE].pos_rel.x() -= dir_x * 0.1f;
+        piezas_grua[PIEZA_BASE].pos_rel.z() -= dir_z * 0.1f;
+    }
+    if (controles.girar_der)
+        piezas_grua[PIEZA_BASE].angulo += 0.02f;
+    if (controles.girar_izq)
+        piezas_grua[PIEZA_BASE].angulo -= 0.02f;
 
     // Mover torre
     if (controles.torre_der)
@@ -109,30 +161,30 @@ void controlarGrua() {
     if (controles.torre_izq)
         piezas_grua[PIEZA_TORRE].angulo -= 0.1f;
     if (controles.torre_arriba)
-        piezas_grua[PIEZA_TORRE].escala[1] = std::clamp(piezas_grua[PIEZA_TORRE].escala[1] + 0.05f, 3.f, 10.f);
+        piezas_grua[PIEZA_TORRE].escala.y() = std::clamp(piezas_grua[PIEZA_TORRE].escala.y() + 0.05f, 3.f, 10.f);
     if (controles.torre_abajo)
-        piezas_grua[PIEZA_TORRE].escala[1] = std::clamp(piezas_grua[PIEZA_TORRE].escala[1] - 0.05f, 3.f, 10.f);
+        piezas_grua[PIEZA_TORRE].escala.y() = std::clamp(piezas_grua[PIEZA_TORRE].escala.y() - 0.05f, 3.f, 10.f);
 
     // Mover brazo
-    if (controles.brazo_extender and piezas_grua[PIEZA_BRAZO].escala[0] < 12.f) {
-        piezas_grua[PIEZA_BRAZO].escala[0] += 0.1f;
-        piezas_grua[PIEZA_BRAZO].pos_rel[0] -= 0.1f;
-        piezas_grua[PIEZA_CABLE].pos_rel[0] -= 0.1f;
+    if (controles.brazo_extender and piezas_grua[PIEZA_BRAZO].escala.x() < 12.f) {
+        piezas_grua[PIEZA_BRAZO].escala.x() += 0.1f;
+        piezas_grua[PIEZA_BRAZO].pos_rel.x() -= 0.1f;
+        piezas_grua[PIEZA_CABLE].pos_rel.x() -= 0.1f;
     }
-    if (controles.brazo_contraer and piezas_grua[PIEZA_BRAZO].escala[0] > 6.f) {
-        piezas_grua[PIEZA_BRAZO].escala[0] -= 0.1f;
-        piezas_grua[PIEZA_BRAZO].pos_rel[0] += 0.1f;
-        piezas_grua[PIEZA_CABLE].pos_rel[0] += 0.1f;
+    if (controles.brazo_contraer and piezas_grua[PIEZA_BRAZO].escala.x() > 6.f) {
+        piezas_grua[PIEZA_BRAZO].escala.x() -= 0.1f;
+        piezas_grua[PIEZA_BRAZO].pos_rel.x() += 0.1f;
+        piezas_grua[PIEZA_CABLE].pos_rel.x() += 0.1f;
     }
 
     // Mover cable
     if (controles.cable_recoger)
-        piezas_grua[PIEZA_CABLE].escala[1] -= 0.1f;
+        piezas_grua[PIEZA_CABLE].escala.y() -= 0.1f;
     if (controles.cable_soltar)
-        piezas_grua[PIEZA_CABLE].escala[1] += 0.1f;
-    if (piezas_grua[PIEZA_CABLE].escala[1] < 2.f)
-        piezas_grua[PIEZA_CABLE].escala[1] = 2.f;
-    if (piezas_grua[PIEZA_CABLE].escala[1] - piezas_grua[PIEZA_TORRE].escala[1] > 0.f)
-        piezas_grua[PIEZA_CABLE].escala[1] = piezas_grua[PIEZA_TORRE].escala[1];
+        piezas_grua[PIEZA_CABLE].escala.y() += 0.1f;
+    if (piezas_grua[PIEZA_CABLE].escala.y() < 2.f)
+        piezas_grua[PIEZA_CABLE].escala.y() = 2.f;
+    if (piezas_grua[PIEZA_CABLE].escala.y() - piezas_grua[PIEZA_TORRE].escala.y() > 0.f)
+        piezas_grua[PIEZA_CABLE].escala.y() = piezas_grua[PIEZA_TORRE].escala.y();
 }
 
