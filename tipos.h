@@ -15,7 +15,15 @@
 #include <numeric>
 #include <memory>
 
-#include <glad.h>
+#ifdef EMSCRIPTEN
+    #include <emscripten.h>
+    #define WEB(x) x
+    #define NOWEB(x)
+#else
+    #include <glad.h>
+    #define WEB(x)
+    #define NOWEB(x) x
+#endif
 #include <glfw3.h>
 
 #include <glm/glm.hpp>

@@ -284,7 +284,8 @@ int main(int arcg, char** argv) {
 
 	// Llamamos al bucle principal de la aplicación
     // Devuelve false cuando se cierra la ventana
-	while ( update(render, solar_gui) ) {};
+	NOWEB(while ( update(render, solar_gui) ) {};)
+    WEB(emscripten_set_main_loop([&](){ update(render, solar_gui); }, 0, true);)
 
     // Antes de salir hacemos limpieza de los objetos utilizados
     terminarGL();

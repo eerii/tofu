@@ -2,10 +2,6 @@
 // Utiliza ImGui para mostrar una interfaz de desarrollo donde configurar parámetros e imprimir datos
 #pragma once
 
-#ifndef DEBUG
-#define DISABLE_GUI
-#endif
-
 // Permite deshabilitar por completo la integración con ImGui
 #ifndef DISABLE_GUI
 

@@ -17,10 +17,10 @@ namespace tofu
         gl.win = crearContexto(w, h, nombre);
 
         // Cargar OpenGL con GLAD
-        if (not gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        NOWEB(if (not gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
             log::error("No se han podido cargar los símbolos de OpenGL con GLAD");
             std::exit(-1);
-        }
+        })
 
         // Funciones extra de ventana
         windowSizeCallback(gl.win, w, h);
