@@ -16,6 +16,8 @@ namespace cam
     inline v3 up = {0.f, 1.f, 0.f};
     inline v3 front, right;
 
+    inline bool raton = true;
+
     const float aceleracion = 2.f;
     const float deceleracion = 0.9f;
     const float vel_max = 20.f;
@@ -23,16 +25,10 @@ namespace cam
 
     const float acc_raton = 0.6f;
     const float dec_raton = 0.7f;
-    const float raton_max = 4.f;
-
-    const float DT = 1.f / 60.f;
+    const float raton_max = 4.f; 
 }
 
 // ---
-
-inline float sign(float x) {
-    return x < 0.f ? -1.f : 1.f;
-}
 
 inline float vlen(v3 v) {
     return std::sqrt(v.x() * v.x() + v.y() * v.y() + v.z() * v.z());
@@ -82,7 +78,7 @@ inline void camara() {
         vel = v3();
 
     // Giro
-    if (gl.raton_conectado) {
+    if (raton) {
         // Yaw - Ratón X
         vel_raton.x() += controles.raton_offx * acc_raton;
         // Pitch - Ratón Y
@@ -102,10 +98,10 @@ inline void camara() {
             vel_raton.y() = 0.f;
         
         // Añadir giros
-        phi += vel_raton.x() * dt;
+        phi += vel_raton.x() * DT;
         phi = std::fmod(phi, 2.f * M_PI);
 
-        theta += vel_raton.y() * dt;
+        theta += vel_raton.y() * DT;
         theta = std::clamp(theta, 0.001f, (float)M_PI);
     }
 

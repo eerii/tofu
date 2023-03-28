@@ -45,8 +45,18 @@ struct v3 {
 struct m4 {
     std::array<float, 16> m;
 
+    m4() { m = {1.f, 0.f, 0.f, 0.f,
+                0.f, 1.f, 0.f, 0.f,
+                0.f, 0.f, 1.f, 0.f,
+                0.f, 0.f, 0.f, 1.f}; }
     m4 (std::array<float, 16> pm) : m(pm) {}
 };
+
+inline float sign(float x) {
+    return x < 0.f ? -1.f : 1.f;
+}
+
+// ---
 
 // Posiciones relativas de los objetos entre si
 enum PosicionamientoRelativo {
@@ -77,9 +87,9 @@ struct PiezaGrua {
 
 enum PiezasImportantes {
     PIEZA_BASE = 1,
-    PIEZA_TORRE = 4,
-    PIEZA_BRAZO = 5,
-    PIEZA_CABLE = 6
+    PIEZA_TORRE = 6,
+    PIEZA_BRAZO = 7,
+    PIEZA_CABLE = 8
 };
 
 // Lista de piezas de la grua
@@ -87,6 +97,8 @@ enum PiezasImportantes {
 inline std::vector<PiezaGrua> piezas_grua = {
     { {0.f, 0.f, 0.f}, {60.f, 1.f, 60.f}, {0.3f, 0.2f, 0.5f} }, // Suelo
     { {0.f, -2.f, 0.f}, {3.f, 0.5f, 4.f}, {1.f, 1.f, 0.5f} }, // Base
+    { {-2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco izquierdo
+    { {2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco derecho
     { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_IZQUIERDA }, // Pie izquierdo de la base
     { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_DERECHA }, // Pie derecho de la base
     { {0.f, 0.f, 0.f}, {1.f, 8.f, 1.f}, {0.5f, 0.5f, 1.f}, PIEZA_BASE, POS_ENCIMA }, // Torre central
@@ -94,6 +106,20 @@ inline std::vector<PiezaGrua> piezas_grua = {
     { {-7.f, 0.f, 0.f}, {0.1f, 6.f, 0.1f}, {1.f, 0.8f, 1.f}, PIEZA_BRAZO, POS_DEBAJO }, // Cable
     { {0.f, 0.f, 0.f}, {0.5f, 0.5f, 0.5f}, {1.f, 0.9f, 0.5f}, PIEZA_CABLE, POS_DEBAJO }, // Gancho
 };
+
+// Movimiento
+inline float vel_giro = 0.f, vel_movimiento = 0.f;
+
+const float acc_giro = 0.1f;
+const float acc_movimiento = 0.3f;
+const float max_vel_giro = 0.03f;
+const float max_vel_movimiento = 0.2f;
+const float decel = 0.93f;
+const float bounds = 58.f;
+
+const float DT = 1.f / 60.f;
+
+// ---
 
 // Obtiene la posición relativa de una pieza
 inline v3 posRelativa(ui32 pieza) {
@@ -116,10 +142,10 @@ inline v3 posRelativa(ui32 pieza) {
         case POS_DERECHA:
             pos.x() += padre->escala.x() + p.escala.x();
             break;
-        case POS_DELANTE:
+        case POS_DETRAS:
             pos.z() -= padre->escala.z() + p.escala.z();
             break;
-        case POS_DETRAS:
+        case POS_DELANTE:
             pos.z() += padre->escala.z() + p.escala.z();
             break;
     }
@@ -142,24 +168,46 @@ inline void controlarGrua() {
     float dir_x = std::sin(piezas_grua[PIEZA_BASE].angulo);
     float dir_z = std::cos(piezas_grua[PIEZA_BASE].angulo);
 
-    if (controles.delante) {
-        piezas_grua[PIEZA_BASE].pos_rel.x() += dir_x * 0.1f;
-        piezas_grua[PIEZA_BASE].pos_rel.z() += dir_z * 0.1f;
-    }
-    if (controles.detras) {
-        piezas_grua[PIEZA_BASE].pos_rel.x() -= dir_x * 0.1f;
-        piezas_grua[PIEZA_BASE].pos_rel.z() -= dir_z * 0.1f;
-    }
+    if (controles.delante)
+        vel_movimiento += acc_movimiento * DT;
+    if (controles.detras)
+        vel_movimiento -= acc_movimiento * DT;
+    if (not controles.delante and not controles.detras)
+        vel_movimiento *= decel;
+
     if (controles.girar_der)
-        piezas_grua[PIEZA_BASE].angulo += 0.02f;
+        vel_giro += acc_giro * DT;
     if (controles.girar_izq)
-        piezas_grua[PIEZA_BASE].angulo -= 0.02f;
+        vel_giro -= acc_giro * DT;
+    if (not controles.girar_der and not controles.girar_izq)
+        vel_giro *= decel;
+
+    if (std::abs(vel_movimiento) > max_vel_movimiento)
+        vel_movimiento = sign(vel_movimiento) * max_vel_movimiento;
+    if (std::abs(vel_movimiento) < 0.001f)
+        vel_movimiento = 0.f;
+
+    if (std::abs(vel_giro) > max_vel_giro)
+        vel_giro = sign(vel_giro) * max_vel_giro;
+    if (std::abs(vel_giro) < 0.001f)
+        vel_giro = 0.f;
+
+    auto &pbase = piezas_grua[PIEZA_BASE].pos_rel;
+
+    pbase.x() += dir_x * vel_movimiento;
+    pbase.z() += dir_z * vel_movimiento;
+    piezas_grua[PIEZA_BASE].angulo += vel_giro;
+
+    if (abs(pbase.x()) > bounds)
+        pbase.x() = sign(pbase.x()) * bounds;
+    if (abs(pbase.z()) > bounds)
+        pbase.z() = sign(pbase.z()) * bounds;
 
     // Mover torre
     if (controles.torre_der)
-        piezas_grua[PIEZA_TORRE].angulo += 0.1f;
+        piezas_grua[PIEZA_TORRE].angulo += max_vel_giro;
     if (controles.torre_izq)
-        piezas_grua[PIEZA_TORRE].angulo -= 0.1f;
+        piezas_grua[PIEZA_TORRE].angulo -= max_vel_giro;
     if (controles.torre_arriba)
         piezas_grua[PIEZA_TORRE].escala.y() = std::clamp(piezas_grua[PIEZA_TORRE].escala.y() + 0.05f, 3.f, 10.f);
     if (controles.torre_abajo)
@@ -167,21 +215,21 @@ inline void controlarGrua() {
 
     // Mover brazo
     if (controles.brazo_extender and piezas_grua[PIEZA_BRAZO].escala.x() < 12.f) {
-        piezas_grua[PIEZA_BRAZO].escala.x() += 0.1f;
-        piezas_grua[PIEZA_BRAZO].pos_rel.x() -= 0.1f;
-        piezas_grua[PIEZA_CABLE].pos_rel.x() -= 0.1f;
+        piezas_grua[PIEZA_BRAZO].escala.x() += max_vel_movimiento;
+        piezas_grua[PIEZA_BRAZO].pos_rel.x() -= max_vel_movimiento;
+        piezas_grua[PIEZA_CABLE].pos_rel.x() -= max_vel_movimiento;
     }
     if (controles.brazo_contraer and piezas_grua[PIEZA_BRAZO].escala.x() > 6.f) {
-        piezas_grua[PIEZA_BRAZO].escala.x() -= 0.1f;
-        piezas_grua[PIEZA_BRAZO].pos_rel.x() += 0.1f;
-        piezas_grua[PIEZA_CABLE].pos_rel.x() += 0.1f;
+        piezas_grua[PIEZA_BRAZO].escala.x() -= max_vel_movimiento;
+        piezas_grua[PIEZA_BRAZO].pos_rel.x() += max_vel_movimiento;
+        piezas_grua[PIEZA_CABLE].pos_rel.x() += max_vel_movimiento;
     }
 
     // Mover cable
     if (controles.cable_recoger)
-        piezas_grua[PIEZA_CABLE].escala.y() -= 0.1f;
+        piezas_grua[PIEZA_CABLE].escala.y() -= max_vel_movimiento;
     if (controles.cable_soltar)
-        piezas_grua[PIEZA_CABLE].escala.y() += 0.1f;
+        piezas_grua[PIEZA_CABLE].escala.y() += max_vel_movimiento;
     if (piezas_grua[PIEZA_CABLE].escala.y() < 2.f)
         piezas_grua[PIEZA_CABLE].escala.y() = 2.f;
     if (piezas_grua[PIEZA_CABLE].escala.y() - piezas_grua[PIEZA_TORRE].escala.y() > 0.f)

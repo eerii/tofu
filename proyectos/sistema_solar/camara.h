@@ -10,7 +10,6 @@ using namespace tofu;
 
 namespace cam
 {
-
     inline glm::vec3 pos = glm::vec3(0.f, -5.f, 20.f);
     inline glm::vec3 vel = glm::vec3(0.f);
 

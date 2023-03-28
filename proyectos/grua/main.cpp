@@ -1,11 +1,13 @@
 // Proyecto: Grua (OpenGL 3.3)
 // José Pazos Pérez
 
+#define DEBUG
 #include "tofu.h"
 using namespace tofu;
 
 #include "grua.h"
 #include "camara.h"
+#include "grua_gui.h"
 
 #include <map>
 
@@ -111,7 +113,8 @@ void inputGrua() {
     controles.cam_arriba = gl.io.teclas[GLFW_KEY_SPACE].mantenida;
     controles.cam_abajo = gl.io.teclas[GLFW_KEY_Q].mantenida;
     controles.raton_offx = gl.io.mouse.xoff;
-    controles.raton_offy = gl.io.mouse.yoff; 
+    controles.raton_offy = gl.io.mouse.yoff;
+    cam::raton = gl.raton_conectado;
 }
 
 // ---
@@ -164,7 +167,7 @@ int main(int arcg, char** argv) {
     actualizarColoresObjetos();
 
 	// Actualización cada frame
-	while ( update(render) ) {};
+	while ( update(render, grua_gui) ) {};
 
     terminarGL();
 	return 0;
