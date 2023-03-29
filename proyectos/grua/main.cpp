@@ -88,8 +88,8 @@ void inputGrua() {
     // Mover base
     controles.delante = gl.io.teclas[GLFW_KEY_W].mantenida;
     controles.detras = gl.io.teclas[GLFW_KEY_S].mantenida;
-    controles.girar_der = gl.io.teclas[GLFW_KEY_D].mantenida;
-    controles.girar_izq = gl.io.teclas[GLFW_KEY_A].mantenida;
+    controles.girar_der = gl.io.teclas[GLFW_KEY_A].mantenida;
+    controles.girar_izq = gl.io.teclas[GLFW_KEY_D].mantenida;
 
     // Mover torre
     controles.torre_der = gl.io.teclas[GLFW_KEY_H].mantenida;
@@ -122,7 +122,19 @@ void inputGrua() {
 void render() {
     // Variables
     camara();
-    gl.view = glm::lookAt(glmvec(cam::pos), glmvec(cam::pos) + glmvec(cam::front), glmvec(cam::up));
+    gl.view = [&](){
+        if (cam::modo == cam::CAMARA_LIBRE)
+            return glm::lookAt(glmvec(cam::pos), glmvec(cam::pos) + glmvec(cam::front), glmvec(cam::up));
+        
+        glm::vec3 grua_pos = glmvec(piezas_grua[PIEZA_BASE].pos_rel);
+        grua_pos += glm::vec3(0.f, -3.f, 0.f);
+
+        if (cam::modo == cam::CAMARA_PRIMERA)
+            return glm::lookAt(grua_pos, grua_pos + glmvec(cam::front), glmvec(cam::up));
+
+        grua_pos += glm::vec3(0.f, -4.f, 0.f);
+        return glm::lookAt(grua_pos - glmvec(cam::front) * 30.f, grua_pos, glmvec(cam::up));
+    }();
     inputGrua();
     controlarGrua();
     actualizarModelosObjetos();
@@ -142,7 +154,6 @@ int main(int arcg, char** argv) {
     // Esto es necesario para que las rutas de los archivos sean correctas
     fs::path path = fs::weakly_canonical(fs::path(argv[0])).parent_path();
     fs::current_path(path);
-    log::info("Directorio actual: {}", path);
 
     // Iniciamos GLFW y OpenGL
     initGL(WIDTH, HEIGHT, "Grua - OpenGL 3.3");

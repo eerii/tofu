@@ -193,6 +193,7 @@ void render() {
     shader::usar("estrellas");
     shader::uniform("time", tiempo);
     shader::uniform("viewproj", viewproj);
+    gl.instancia_base = 2*num_planetas + num_asteroides;
     DIBUJAR_SI(estrellas, cull_estrellas, cubo)
 
     // ---
@@ -234,24 +235,20 @@ int main(int arcg, char** argv) {
     // Esto es necesario para que las rutas de los archivos sean correctas
     fs::path path = fs::weakly_canonical(fs::path(argv[0])).parent_path();
     fs::current_path(path);
-    log::info("Directorio actual: {}", path);
 
     // Iniciamos GLFW y OpenGL
-    log::info("Iniciando OpenGL");
     initGL(WIDTH, HEIGHT, "Sistema Solar");
 
     // Creamos los buffers principales que almacenan la información por instancia
     log::info("Iniciando VAOs");
     buffer::iniciarVAO(atributos);
     buffer::iniciarVAO(atributos_planeta, "vao_calc_modelos");
-    log::info("Creado Buffers");
     buf_planetas = texbuffer::crear<glm::vec3>();
     buf_modelos = texbuffer::crear<glm::mat4>();
     buf_color = texbuffer::crear<glm::vec4>();
     buf_estrellas = texbuffer::crear<glm::mat4>();
 
     // Cargamos las shader a utilizar
-    log::info("Cargando Shaders");
     shader::cargar("planetas");
     shader::cargar("orbitas");
     shader::cargar("estrellas");
@@ -263,7 +260,6 @@ int main(int arcg, char** argv) {
     // Utilizamos un mismos buffer para guardar todos los vértices y pasamos offsets al dibujar
     // Esto evita que tengamos que desvincular y vincular varios VBOs en cada frame, operación bastante costosa
     // Además, si tuvieramos acceso, es la manera más recomendada de hacer renderizado indirecto
-    log::info("Cargando Geometría");
     buffer::cargarVert("esfera20", geometria::esferaOct(20));
     buffer::cargarVert("esfera5", geometria::esferaOct(5));
     buffer::cargarVert("cubo", geometria::cubo());
@@ -275,7 +271,6 @@ int main(int arcg, char** argv) {
     // Crear planetas
     // Construímos los planetas y asteroides, unos a partir de las constantes que indicamos y otros por variables aleatorias
     // Luego llamamos a iniciarDatosPlanetas para cargar estos datos en la GPU
-    log::info("Cargando Datos de Planetas");
     iniciarDatosPlanetas();
 
     // Creamos queries

@@ -48,23 +48,13 @@ mat4 rotate(float angle, vec3 v) {
 
 // Frustum culling en espacio clip
 int fustrum(mat4 m, float r) {
-    vec4 derecha = (viewproj * translate(vec3(-r, 0, 0)) * m)[3];
-    if (derecha.x > derecha.w)
+    vec4 pos = viewproj * m[3];
+    pos.w += (viewproj * vec4(r)).w;
+    if (pos.x < -pos.w || pos.x > pos.w)
+        return 0;
+    if (pos.y < -pos.w || pos.y > pos.w)
         return 0;
 
-    vec4 izquierda = (viewproj * translate(vec3(r, 0, 0)) * m)[3];
-    if (izquierda.x < -izquierda.w)
-        return 0;
-
-    vec4 arriba = (viewproj * translate(vec3(0, -r, 0)) * m)[3];
-    if (arriba.y < -arriba.w)
-        return 0;
-
-    vec4 abajo = (viewproj * translate(vec3(0, r, 0)) * m)[3];
-    if (abajo.y > abajo.w)
-        return 0;
-
-    // No hacemos culling cerca-lejos ya que en este renderizado no queremos descartar nada lejano
     return 1;
 }
 

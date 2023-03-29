@@ -15,7 +15,6 @@
 
 namespace tofu {
     // Formatear strings
-
     namespace detail
     {
         template <typename T>

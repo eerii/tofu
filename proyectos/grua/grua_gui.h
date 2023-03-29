@@ -54,7 +54,13 @@ inline void grua_gui() {
     // Muestra las propiedades de la cámara y permite cambiar entre modos (libre, planeta y telescopio)
     if (sgui.ventana_camara) {
         ImGui::Begin("Camara", &sgui.ventana_camara);
+            // Posición
+            ImGui::DragFloat3("Pos", cam::pos.v.data(), 0.1f);
 
+            // Modo de cámara
+            ImGui::RadioButton("Libre", (int*)&cam::modo, cam::CAMARA_LIBRE);
+            ImGui::RadioButton("3º Persona", (int*)&cam::modo, cam::CAMARA_TERCERA);
+            ImGui::RadioButton("1º Persona", (int*)&cam::modo, cam::CAMARA_PRIMERA);
         ImGui::End();
     }
 #endif

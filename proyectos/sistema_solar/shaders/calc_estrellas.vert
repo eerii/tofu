@@ -16,7 +16,9 @@ out float id;
 int fustrum(mat4 m, float r) {
     // En este caso solo usamos la posición porque están tan lejos que las podemos tratar como un punto
     vec4 pos = (viewproj * m)[3];
-    if (pos.x > pos.w)
+    if (pos.x < -pos.w || pos.x > pos.w)
+        return 0;
+    if (pos.y < -pos.w || pos.y > pos.w)
         return 0;
 
     return 1;

@@ -196,6 +196,7 @@ namespace tofu
             return indice;
         }
 
+        // Transformar el formato combinado a un formato simple
         inline ui32 fi_a_formato(ui32 fint) {
             ui32 formato;
 
@@ -215,6 +216,7 @@ namespace tofu
             return formato;
         }
 
+        // Transformar el formato combinado al tipo de dato
         inline ui32 fi_a_tipo(ui32 fint) {
             ui32 tipo;
 
@@ -235,6 +237,7 @@ namespace tofu
 
     namespace texbuffer
     {
+        // Offset en el número de texturas desde donde empezarán a contar los texbuffers (para evitar colisiones)
         inline const ui32 texbuffer_offset = 8;
 
         // Crea un texture buffer
@@ -280,6 +283,8 @@ namespace tofu
 
     namespace framebuffer
     {
+        // Crea un framebuffer con el tamaño especificado
+        // Elige automáticamente el tipo de textura subyacente que va a tener
         inline ui32 crear(glm::ivec2 tam, glm::vec4 clear) {
             Framebuffer fb {
                 .tam = glm::ivec3(tam, 1),

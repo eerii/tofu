@@ -18,6 +18,9 @@ namespace cam
 
     inline bool raton = true;
 
+    enum ModoCamara { CAMARA_LIBRE, CAMARA_TERCERA, CAMARA_PRIMERA };
+    inline ModoCamara modo = CAMARA_LIBRE;
+
     const float aceleracion = 2.f;
     const float deceleracion = 0.9f;
     const float vel_max = 20.f;
@@ -104,9 +107,10 @@ inline void camara() {
         theta += vel_raton.y() * DT;
         theta = std::clamp(theta, 0.001f, (float)M_PI);
     }
-
-    // Cámara libre
+    
     pos += vel * DT;
-    front = v3(cos(phi - 0.5f * M_PI) * sin(theta), cos(theta), sin(phi - 0.5f * M_PI) * sin(theta));
+    front = modo == CAMARA_PRIMERA ?
+            v3(sin(piezas_grua[PIEZA_BASE].angulo) * sin(theta), cos(theta), cos(piezas_grua[PIEZA_BASE].angulo) * sin(theta)) :
+            v3(cos(phi - 0.5f * M_PI) * sin(theta), cos(theta), sin(phi - 0.5f * M_PI) * sin(theta));
     right = vcross(front, up);
 }
