@@ -3,6 +3,8 @@
 
 #include "debug.h"
 #include "input.h"
+#include "buffers.h"
+#include "shaders.h"
 
 namespace tofu
 {
@@ -36,7 +38,7 @@ namespace tofu
         glfwSetInputMode(win, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
         // VSync
-        glfwSwapInterval(1);
+        glfwSwapInterval(0);
 
         return win;
     }

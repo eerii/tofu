@@ -111,7 +111,7 @@ namespace tofu
                 ImGui::Text("ajustes");
                 
                 // VSync
-                static bool vsync = true;
+                static bool vsync = false;
                 if (ImGui::Checkbox("vsync", &vsync))
                     glfwSwapInterval(vsync);
 

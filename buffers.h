@@ -208,6 +208,8 @@ namespace tofu
                 formato = GL_RGB;
             else if (fint == GL_RGBA32F or fint == GL_RGBA32I or fint == GL_RGBA32UI)
                 formato = GL_RGBA;
+            else if (fint == GL_DEPTH24_STENCIL8)
+                formato = GL_DEPTH_STENCIL;
             else {
                 log::error("Formato de textura no soportado");
                 std::exit(-1);
@@ -226,6 +228,8 @@ namespace tofu
                 tipo = GL_INT;
             else if (fint == GL_R32UI or fint == GL_RG32UI or fint == GL_RGB32UI or fint == GL_RGBA32UI)
                 tipo = GL_UNSIGNED_INT;
+            else if (fint == GL_DEPTH24_STENCIL8)
+                tipo = GL_UNSIGNED_INT_24_8;
             else {
                 log::error("Formato de textura no soportado");
                 std::exit(-1);
@@ -285,7 +289,7 @@ namespace tofu
     {
         // Crea un framebuffer con el tamaño especificado
         // Elige automáticamente el tipo de textura subyacente que va a tener
-        inline ui32 crear(glm::ivec2 tam, glm::vec4 clear) {
+        inline ui32 crear(glm::ivec2 tam, glm::vec4 clear, std::vector<ui32> attachments = { GL_RGBA32F }) {
             Framebuffer fb {
                 .tam = glm::ivec3(tam, 1),
                 .clear = clear,
@@ -296,32 +300,41 @@ namespace tofu
 
             // Calculamos la dimensión
             // - Su tamaño y determina si es 1D o 2D
-            // - Si su tamaño en x es mayor que el tamaño máximo de una textura, creamos un array
             ui32 dimension = tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
-            if (tam.x > gl.max_tex_size) {
-                dimension = tam.y < 2 ? GL_TEXTURE_1D_ARRAY : GL_TEXTURE_2D_ARRAY;
-                fb.tam.z = tam.x / gl.max_tex_size;
-                fb.tam.x = gl.max_tex_size;
-            }
 
-            // Creamos la textura
-            fb.tex = textura::crear(dimension, GL_RGBA32F, 0);
-            Textura& tex = gl.texturas[fb.tex];
-            glBindTexture(dimension, tex.textura);
+            // Contador de attachments de color y depth
+            ui32 attachment_count = 0;
+            bool has_depth = false;
 
-            if (dimension == GL_TEXTURE_1D) { // 1D
-                glTexImage1D(GL_TEXTURE_1D, 0, tex.formato, fb.tam.x, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
-                glFramebufferTexture1D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_1D, tex.textura, 0);
-            } else if (dimension == GL_TEXTURE_2D) { // 2D
-                glTexImage2D(GL_TEXTURE_2D, 0, tex.formato, fb.tam.x, fb.tam.y, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
-                glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex.textura, 0);
-            } else if (dimension == GL_TEXTURE_1D_ARRAY) { // 1D pero hecho array
-                glTexImage2D(GL_TEXTURE_1D_ARRAY, 0, tex.formato, fb.tam.x, fb.tam.z, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
-                glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex.textura, 0);
-                log::warn("Todavía no está implementado en las shaders usar un array de texturas para el framebuffer");
-            } else {
-                log::error("Dimension de framebuffer no soportada");
-                std::exit(-1);
+            // Creamos los attachments y sus texturas
+            for (auto a : attachments) {
+                fb.attachments.push_back(textura::crear(dimension, a, 0));
+                Textura& tex = gl.texturas[fb.attachments.back()];
+                glBindTexture(dimension, tex.textura);
+
+                if (has_depth == true) {
+                    log::error("No se puede crear un framebuffer con más de un attachment de profundidad");
+                    std::exit(-1);
+                }
+
+                ui32 slot_attachment = GL_DEPTH_STENCIL_ATTACHMENT;
+                if (a == GL_DEPTH24_STENCIL8)
+                    has_depth = true;
+                else
+                    slot_attachment = GL_COLOR_ATTACHMENT0 + attachment_count++;
+
+                if (dimension == GL_TEXTURE_1D) { // 1D
+                    glTexImage1D(GL_TEXTURE_1D, 0, tex.formato, fb.tam.x, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
+                    glFramebufferTexture1D(GL_FRAMEBUFFER, slot_attachment, GL_TEXTURE_1D, tex.textura, 0);
+                } else if (dimension == GL_TEXTURE_2D) { // 2D
+                    glTexImage2D(GL_TEXTURE_2D, 0, tex.formato, fb.tam.x, fb.tam.y, 0, textura::fi_a_formato(tex.formato), textura::fi_a_tipo(tex.formato), NULL);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, slot_attachment, GL_TEXTURE_2D, tex.textura, 0); 
+                } else {
+                    log::error("Dimension de framebuffer no soportada");
+                    std::exit(-1);
+                }
             }
 
             // Comprobamos que el framebuffer se haya creado bien

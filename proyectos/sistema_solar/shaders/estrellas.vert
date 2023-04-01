@@ -32,6 +32,11 @@ void main() {
     int id = int(m[0][3]);
     m[0][3] = 0.0;
 
+    if (abs(m[3][0]) < 100) {
+        gl_Position = vec4(0.0);
+        return;
+    }
+
     gl_Position = viewproj * m * vec4(in_pos, 1.0);
 
     // Color

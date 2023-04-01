@@ -2,7 +2,8 @@
 // José Pazos Pérez
 
 // TODO:
-// - Documentar funciones tofu
+// - Órbitas elípticas
+// - !!! Redimensionar framebuffers al cambiar tamaño de pantalla
 // - Cambiar a usar instanced arrays!!! https://learnopengl.com/Advanced-OpenGL/Instancing
 //      No lo puedo usar para dibujar planetas por límites y no tener offsets, pero si se pueden usar para calcular los modelos
 // - Poner en itch.io con emscripten
@@ -53,12 +54,14 @@ const std::vector<ui32> atributos = { 3 /* Pos */ };
 // La shader para calcular los modelos de los planetas no necesita ningún atributo
 const std::vector<ui32> atributos_planeta = {};
 
-// La shader para mostrar una textura 2D necesita un atributo de posición 2D
-const std::vector<ui32> atributos_textura = { 2 /* Pos */ };
-
 // Vista y proyección
 // Matriz que combina gl.view y gl.proj para transformar los modelos
 glm::mat4 viewproj;
+
+// Framebuffer para deferred rendering
+ui32 fbo_dibujo;
+const std::vector<ui32> attachments_dibujo = { GL_RGBA32F, GL_RGBA32F, GL_DEPTH24_STENCIL8 };
+const std::vector<ui32> color_att_dibujo = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 
 // ---
 
@@ -178,10 +181,18 @@ void render() {
     // Planetas
     shader::usar("planetas");
     shader::uniform("viewproj", viewproj);
+    shader::uniform("viewpos", cam::pos);
+    glDrawBuffers(color_att_dibujo.size(), color_att_dibujo.data());
     gl.instancia_base = 0;
     DIBUJAR_SI(planetas, cull_planetas, esfera20) // Planetas
     gl.instancia_base = num_planetas;
     DIBUJAR_SI(asteroides, cull_asteroides, esfera5) // Asteroides (modelo con menos resolucion)
+
+    // Dibujo en diferido
+    // Tomamos el framebuffer fbo_dibujo y lo mostramos en pantalla
+    shader::usar("deferred");
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    debug::gl();
 
     // Orbitas
     shader::usar("orbitas");
@@ -215,7 +226,7 @@ void render() {
     if (culling) {
         shader::usar("calc_estrellas");
         shader::uniform("viewproj", viewproj);
-        shader::uniform("culling", 1);
+        shader::uniform("culling", (int)culling);
         cull_estrellas = transformFeedback(2*num_planetas + num_asteroides, num_estrellas, gl.buffers[buf_modelos.b]);
     }
 
@@ -240,20 +251,35 @@ int main(int arcg, char** argv) {
     initGL(WIDTH, HEIGHT, "Sistema Solar");
 
     // Creamos los buffers principales que almacenan la información por instancia
-    log::info("Iniciando VAOs");
     buffer::iniciarVAO(atributos);
-    buffer::iniciarVAO(atributos_planeta, "vao_calc_modelos");
+    buffer::iniciarVAO(atributos_planeta, "vao_vacio");
     buf_planetas = texbuffer::crear<glm::vec3>();
     buf_modelos = texbuffer::crear<glm::mat4>();
     buf_color = texbuffer::crear<glm::vec4>();
     buf_estrellas = texbuffer::crear<glm::mat4>();
 
+    // Creamos el framebuffer necesario para hacer deferred rendering
+    fbo_dibujo = framebuffer::crear(gl.tam_fb, {0.f, 0.f, 0.f, 0.f}, attachments_dibujo);
+
     // Cargamos las shader a utilizar
-    shader::cargar("planetas");
+    shader::cargar("planetas", "main", fbo_dibujo);
     shader::cargar("orbitas");
     shader::cargar("estrellas");
-    shader::cargar("calc_modelos", "vao_calc_modelos", 0, {}, { "out_modelo" });
-    shader::cargar("calc_estrellas", "vao_calc_modelos", 0, {}, { "out_modelo" });
+    shader::cargar("calc_modelos", "vao_vacio", 0, {}, { "out_modelo" });
+    shader::cargar("calc_estrellas", "vao_vacio", 0, {}, { "out_modelo" });
+    shader::cargar("deferred", "vao_vacio", 0);
+
+    // Especificamos los attachments a usar en deferred
+    shader::usar("deferred");
+    int attachment_i = 12;
+    for (auto a : gl.framebuffers[fbo_dibujo].attachments) {
+        Textura& tex = gl.texturas[a];
+        glActiveTexture(GL_TEXTURE0 + attachment_i++);
+        glBindTexture(GL_TEXTURE_2D, tex.textura);
+    }
+    shader::uniform("color", 12);
+    shader::uniform("normal", 13);
+    shader::uniform("depth", 14);
 
     // Cargamos en memoria las figuras a dibujar
     // Se añaden automáticamente al VBO/EBO y guardamos la información de indexado
