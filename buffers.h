@@ -287,29 +287,25 @@ namespace tofu
 
     namespace framebuffer
     {
-        // Crea un framebuffer con el tamaño especificado
-        // Elige automáticamente el tipo de textura subyacente que va a tener
-        inline ui32 crear(glm::ivec2 tam, glm::vec4 clear, std::vector<ui32> attachments = { GL_RGBA32F }) {
-            Framebuffer fb {
-                .tam = glm::ivec3(tam, 1),
-                .clear = clear,
-            };
+        inline const ui32 fb_offset = 12;
 
-            glGenFramebuffers(1, &fb.fbo);
+        // Crea las texturas de un framebuffer
+        inline void crearTexturas(Framebuffer &fb) {
             glBindFramebuffer(GL_FRAMEBUFFER, fb.fbo);
 
             // Calculamos la dimensión
             // - Su tamaño y determina si es 1D o 2D
-            ui32 dimension = tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
+            ui32 dimension = fb.tam.y < 2 ? GL_TEXTURE_1D : GL_TEXTURE_2D;
 
             // Contador de attachments de color y depth
             ui32 attachment_count = 0;
             bool has_depth = false;
 
             // Creamos los attachments y sus texturas
-            for (auto a : attachments) {
+            for (auto a : fb.attachment_description) {
                 fb.attachments.push_back(textura::crear(dimension, a, 0));
                 Textura& tex = gl.texturas[fb.attachments.back()];
+                glActiveTexture(GL_TEXTURE0 + attachment_count + fb_offset);
                 glBindTexture(dimension, tex.textura);
 
                 if (has_depth == true) {
@@ -343,12 +339,37 @@ namespace tofu
                 debug::gl();
                 std::exit(-1);
             }
-
             debug::gl();
+        }
 
-            ui32 id = gl.buffers.size() + 1;
+        // Crea un framebuffer con el tamaño especificado
+        // Elige automáticamente el tipo de textura subyacente que va a tener
+        inline ui32 crear(glm::ivec2 tam, glm::vec4 clear, std::vector<ui32> attachments = { GL_RGBA32F }, ui32 id = 0) {
+            Framebuffer fb {
+                .attachment_description = attachments,
+                .tam = glm::ivec3(tam, 1),
+                .clear = clear,
+            };
+
+            glGenFramebuffers(1, &fb.fbo);
+            crearTexturas(fb);
+
+            id = id > 0 ? id : gl.buffers.size() + 1;
             gl.framebuffers[id] = fb;
             return id;
+        }
+
+        // Redimensionar un framebuffer (eliminar todas las texturas y las volvemos a crear con los mismos ajustes)
+        inline void redimensionar(ui32 id, glm::ivec2 tam) {
+            Framebuffer& fb = gl.framebuffers[id];
+            fb.tam = glm::ivec3(tam.x, tam.y, 1);
+            for (auto t : fb.attachments) {
+                Textura& tex = gl.texturas[t];
+                glDeleteTextures(1, &tex.textura);
+            }
+            crearTexturas(fb);
+
+            debug::gl();
         }
     }
 }

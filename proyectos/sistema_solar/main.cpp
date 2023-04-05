@@ -1,19 +1,11 @@
 // Proyecto: Sistema Solar
 // José Pazos Pérez
 
-// TODO:
-// - Órbitas elípticas
-// - !!! Redimensionar framebuffers al cambiar tamaño de pantalla
-// - Cambiar a usar instanced arrays!!! https://learnopengl.com/Advanced-OpenGL/Instancing
-//      No lo puedo usar para dibujar planetas por límites y no tener offsets, pero si se pueden usar para calcular los modelos
-// - Poner en itch.io con emscripten
-// - Mapas de terreno
-// - Ruído perlin, múltiples niveles
-// - Cráteres
-// - Triplanar mapping para texturas y normales
-// - Atmósferas
-// - Outlines a los planetas (manifold garden siggraph, sdf)
-// - N body dynamics
+// Opciones
+#define DEBUG
+//#define ORBITAS_ELIPTICAS
+//#define USE_MULTISAMPLING
+//#define USE_RETINA_FB
 
 // Librería de OpenGL 3.3 (core)
 // Define las funciones básicas que se pueden utilizar en mútiples proyectos
@@ -21,7 +13,6 @@
 // No se puede contruír un motor totalmente indirecto en el que la GPU haga todo el trabajo ya que estas capacidades se incluyen en OpenGL 4
 // De todas maneras, aprovecha muchas herramientas disponibles para una mejor disponibilidad de los datos a dibujar
 // Incluye GLFW, GLAD y GLM
-#define DEBUG
 #include "tofu.h"
 using namespace tofu;
 
@@ -60,8 +51,8 @@ glm::mat4 viewproj;
 
 // Framebuffer para deferred rendering
 ui32 fbo_dibujo;
-const std::vector<ui32> attachments_dibujo = { GL_RGBA32F, GL_RGBA32F, GL_DEPTH24_STENCIL8 };
-const std::vector<ui32> color_att_dibujo = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+const std::vector<ui32> attachments_dibujo = { GL_RGBA32F, GL_RGBA32F, GL_RGBA32F, GL_DEPTH24_STENCIL8 };
+const std::vector<ui32> color_att_dibujo = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 
 // ---
 
@@ -74,7 +65,13 @@ void iniciarDatosPlanetas() {
     // 0 - radio
     // 1 - distancia
     // 2 - indice del padre
-    std::vector<glm::vec3> planetas_gpu;
+    // 3 - excentricidad órbita
+    std::vector<glm::vec4> planetas_gpu;
+
+    #ifndef ORBITAS_ELIPTICAS
+    for (auto &[n, p] : planetas)
+        p.excentricidad = 0.f;
+    #endif
 
     // Iteramos por los planetas que tenemos
     ui32 i = 0;
@@ -90,7 +87,7 @@ void iniciarDatosPlanetas() {
             padre = (float)std::distance(planetas.begin(), it);
         }
         // Añadimos el planeta a la lista
-        planetas_gpu.push_back({ p.radio, p.distancia, padre });
+        planetas_gpu.push_back({ p.radio, p.distancia, padre, p.excentricidad });
         i++;
     }
 
@@ -105,14 +102,22 @@ void iniciarDatosPlanetas() {
     for (const auto &[n, p] : planetas) {
         if (p.orbita != "")
             continue;
-        orbitas.push_back(glm::scale(glm::mat4(1.f), glm::vec3(p.distancia)));
+        glm::mat4 m = glm::mat4(1.f);
+        m = glm::translate(m, glm::vec3(- (p.excentricidad * p.distancia), 0.f, 0.f));
+        m = glm::scale(m, glm::vec3((1.f + p.excentricidad) * p.distancia, 1.f, p.distancia));
+        orbitas.push_back(m);
     }
 
     // Creamos los asteroides y los anillos de saturno
     for (ui32 i = 0; i < num_asteroides - 100; i++) {
         float radio = (std::rand() % 100 / 100.f) * 0.1f + 0.1f;
         float distancia = (std::rand() % 100 / 100.f) * 4.f + 29.f;
-        planetas_gpu.push_back({ radio, distancia, -1.f });
+        #ifdef ORBITAS_ELIPTICAS
+        float exc = (std::rand() % 100 / 100.f) * 0.04f + 0.08f;
+        #else
+        float exc = 0.f;
+        #endif
+        planetas_gpu.push_back({ radio, distancia, -1.f, exc });
         color.push_back(glm::vec4(cos(i), sin(i), 1.f, 0.f));
     }
     auto it = planetas.find("Saturno");
@@ -120,7 +125,7 @@ void iniciarDatosPlanetas() {
     for (ui32 i = 0; i < 100; i++) {
         float radio = (std::rand() % 100 / 100.f) * 0.04f + 0.06f;
         float distancia = (std::rand() % 100 / 100.f) * 0.5f + 2.f;
-        planetas_gpu.push_back({ radio, distancia, padre });
+        planetas_gpu.push_back({ radio, distancia, padre, 0.f });
         color.push_back(glm::vec4(1.f, 0.9f, (sin(i) + 1.f) * 0.7f, 0.f));
     }
 
@@ -160,6 +165,7 @@ void iniciarDatosPlanetas() {
     shader::usar("planetas");
     shader::uniform("bmodelos", buf_modelos);
     shader::uniform("bcolor", buf_color);
+    shader::uniform("activar_luz", 1.f); 
 
     shader::usar("orbitas");
     shader::uniform("borbitas", buf_modelos);
@@ -180,19 +186,12 @@ void iniciarDatosPlanetas() {
 void render() {
     // Planetas
     shader::usar("planetas");
-    shader::uniform("viewproj", viewproj);
-    shader::uniform("viewpos", cam::pos);
+    shader::uniform("viewproj", viewproj); 
     glDrawBuffers(color_att_dibujo.size(), color_att_dibujo.data());
     gl.instancia_base = 0;
     DIBUJAR_SI(planetas, cull_planetas, esfera20) // Planetas
     gl.instancia_base = num_planetas;
-    DIBUJAR_SI(asteroides, cull_asteroides, esfera5) // Asteroides (modelo con menos resolucion)
-
-    // Dibujo en diferido
-    // Tomamos el framebuffer fbo_dibujo y lo mostramos en pantalla
-    shader::usar("deferred");
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    debug::gl();
+    DIBUJAR_SI(asteroides, cull_asteroides, esfera5) // Asteroides (modelo con menos resolucion) 
 
     // Orbitas
     shader::usar("orbitas");
@@ -206,6 +205,13 @@ void render() {
     shader::uniform("viewproj", viewproj);
     gl.instancia_base = 2*num_planetas + num_asteroides;
     DIBUJAR_SI(estrellas, cull_estrellas, cubo)
+
+    // Dibujo en diferido
+    // Tomamos el framebuffer fbo_dibujo y lo mostramos en pantalla
+    shader::usar("deferred");
+    shader::uniform("viewpos", cam::pos);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+    debug::gl();
 
     // ---
 
@@ -253,16 +259,21 @@ int main(int arcg, char** argv) {
     // Creamos los buffers principales que almacenan la información por instancia
     buffer::iniciarVAO(atributos);
     buffer::iniciarVAO(atributos_planeta, "vao_vacio");
-    buf_planetas = texbuffer::crear<glm::vec3>();
+    buf_planetas = texbuffer::crear<glm::vec4>();
     buf_modelos = texbuffer::crear<glm::mat4>();
     buf_color = texbuffer::crear<glm::vec4>();
     buf_estrellas = texbuffer::crear<glm::mat4>();
 
     // Creamos el framebuffer necesario para hacer deferred rendering
-    fbo_dibujo = framebuffer::crear(gl.tam_fb, {0.f, 0.f, 0.f, 0.f}, attachments_dibujo);
+    #ifdef USE_RETINA_FB
+        glm::uvec2 tam = gl.tam_fb;
+    #else
+        glm::uvec2 tam = gl.tam_win;
+    #endif
+    fbo_dibujo = framebuffer::crear(tam, {0.f, 0.f, 0.f, 0.f}, attachments_dibujo);
 
     // Cargamos las shader a utilizar
-    shader::cargar("planetas", "main", fbo_dibujo);
+    shader::cargar("planetas", "main", fbo_dibujo, { .blend = false });
     shader::cargar("orbitas");
     shader::cargar("estrellas");
     shader::cargar("calc_modelos", "vao_vacio", 0, {}, { "out_modelo" });
@@ -271,15 +282,13 @@ int main(int arcg, char** argv) {
 
     // Especificamos los attachments a usar en deferred
     shader::usar("deferred");
-    int attachment_i = 12;
-    for (auto a : gl.framebuffers[fbo_dibujo].attachments) {
-        Textura& tex = gl.texturas[a];
-        glActiveTexture(GL_TEXTURE0 + attachment_i++);
-        glBindTexture(GL_TEXTURE_2D, tex.textura);
-    }
-    shader::uniform("color", 12);
-    shader::uniform("normal", 13);
-    shader::uniform("depth", 14);
+    shader::uniform("color", (int)framebuffer::fb_offset + 0);
+    shader::uniform("normal", (int)framebuffer::fb_offset + 1);
+    shader::uniform("pos", (int)framebuffer::fb_offset + 2);
+    shader::uniform("depth", (int)framebuffer::fb_offset + 3);
+    shader::uniform("tam_win", glm::vec2(gl.tam_win));
+    shader::uniform("activar_bordes", 1.f);
+    shader::uniform("activar_toon", 1.f); 
 
     // Cargamos en memoria las figuras a dibujar
     // Se añaden automáticamente al VBO/EBO y guardamos la información de indexado
@@ -312,3 +321,11 @@ int main(int arcg, char** argv) {
     terminarGL();
 	return 0;
 }
+
+// TODO:
+// - Mapas de terreno
+// - Ruído perlin, múltiples niveles
+// - Cráteres
+// - Triplanar mapping para texturas y normales
+// - Atmósferas
+// - N body dynamics

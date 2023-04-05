@@ -157,6 +157,7 @@ int main(int arcg, char** argv) {
 
     // Iniciamos GLFW y OpenGL
     initGL(WIDTH, HEIGHT, "Grua - OpenGL 3.3");
+    glfwSwapInterval(1);
 
     // Cargamos la shader a utilizar
     shader::cargar("grua");

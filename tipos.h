@@ -100,6 +100,7 @@ namespace tofu
     struct Framebuffer {
         ui32 fbo;
         std::vector<ui32> attachments;
+        std::vector<ui32> attachment_description;
         glm::ivec3 tam;
         glm::vec4 clear;
     };

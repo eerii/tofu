@@ -141,7 +141,8 @@ inline void camara() {
     // Rota alrededor del planeta con theta/phi
     if (modo == CAMARA_PLANETA) {
         front = glm::vec3(cos(phi - 0.5f * M_PI) * sin(theta), cos(theta), sin(phi - 0.5f * M_PI) * sin(theta));
-        gl.view = glm::lookAt(planeta_pos - front * (planeta_radio * 2.f + 3.f), planeta_pos, up);
+        pos = planeta_pos - front * (planeta_radio * 2.f + 3.f);
+        gl.view = glm::lookAt(pos, planeta_pos, up);
         return;
     }
 
@@ -155,8 +156,6 @@ inline void camara() {
     glm::vec3 mirar_a_pos = mirar_a_mat[3];
 
     // Cámara telescopio
-    if (modo == CAMARA_TELESCOPIO) {
-        gl.view = glm::lookAt(planeta_pos, mirar_a_pos, up);
-        return;
-    }
+    pos = planeta_pos;
+    gl.view = glm::lookAt(planeta_pos, mirar_a_pos, up);
 }

@@ -60,11 +60,11 @@ int fustrum(mat4 m, float r) {
 
 // ---
 
-mat4 calcularModelo(float r, float d, float i, bool padre) {
-    float v = d > 1.0 ? (10.0 / d + rand(i * 10) * 0.05) * 0.5 : 0.0;
+mat4 calcularModelo(float r, float d, float i, float exc, bool padre) {
+    float v = d > 1.0 ? (10.0 / d + rand(i * 55) * 0.05) * 0.5 : 0.0;
+    float pos = time * v + rand(i * 67) * 10.0;
 
-    mat4 m = rotate(time * v + rand(i) * 10.0, vec3(0.0, 1.0, 0.0));
-    m *= translate(vec3(d, 0.0, 0.0));
+    mat4 m = translate(vec3(d * ((1.0 + exc) * cos(pos) - exc), 0.0, d * sin(pos)));
     if (!padre)
         m *= scale(vec3(r));
 
@@ -77,19 +77,19 @@ void main() {
     id = float(ins);
 
     // Obtener los datos del buffer de entrada
-    vec3 buf = texelFetch(bplanetas, ins).xyz;
+    vec4 buf = texelFetch(bplanetas, ins);
+    float padre = buf.z;
 
     // Transformación del planeta
-    modelo = calcularModelo(buf.x, buf.y, float(ins), false);
+    modelo = calcularModelo(buf.x, buf.y, float(ins), buf.w, false);
 
     // Obtener transformación del padre
-    float padre = buf.z;
     if (padre != -1.0) {
         mat4 p[MAX_REC];
         int i = 0;
         while (padre != -1.0) {
-            buf = texelFetch(bplanetas, int(padre)).xyz;
-            p[i++] = calcularModelo(buf.x, buf.y, padre, true);
+            buf = texelFetch(bplanetas, int(padre));
+            p[i++] = calcularModelo(buf.x, buf.y, padre, buf.w, true);
             padre = buf.z;
         }
         mat4 mp = mat4(1.0);

@@ -4,6 +4,7 @@ layout (location = 0) in vec3 in_pos;
 
 uniform int baseins;
 uniform mat4 viewproj;
+uniform float activar_luz;
 
 uniform samplerBuffer bmodelos;
 uniform samplerBuffer bcolor;
@@ -72,4 +73,5 @@ void main() {
     frag_pos = m * vec4(in_pos * disp, 1.0);
     gl_Position = viewproj * frag_pos;
 
+    iluminar *= activar_luz;
 }

@@ -28,6 +28,10 @@ inline struct SolarGui {
         { "orbitas", true },
         { "estrellas", true }
     };
+
+    bool activar_luz = true;
+    bool activar_bordes = true;
+    bool activar_toon = true;
 } sgui;
 #endif
 
@@ -65,10 +69,36 @@ inline void solar_gui() {
     if (sgui.ventana_dibujar) {
         ImGui::Begin("Dibujar", &sgui.ventana_dibujar);
 
+        // Opciones sobre qué objetos dibujar
+        ImGui::Text("dibujar:");
         for (auto& [k, v] : sgui.dibujar)
             ImGui::Checkbox(k.c_str(), &v);
 
-        ImGui::SliderFloat("Velocidad", &velocidad, 0.0, 10.0, "%.2f", ImGuiSliderFlags_Logarithmic);
+        ImGui::Text("opciones:");
+
+        // Velocidad de simulación
+        ImGui::SliderFloat("velocidad", &velocidad, 0.0, 10.0, "%.2f", ImGuiSliderFlags_Logarithmic);
+
+        // Culling, desactivar si no está en modo camara libre
+        ImGui::BeginDisabled(cam::modo != cam::CAMARA_LIBRE);
+        if (ImGui::Checkbox("culling", &culling) and not culling)
+            desactivarCulling();
+        ImGui::EndDisabled();
+
+        // Iluminación y bordes
+        if (ImGui::Checkbox("iluminación", &sgui.activar_luz)) {
+            shader::usar("planetas");
+            shader::uniform("activar_luz", sgui.activar_luz ? 1.f : 0.f);
+        }
+        if (ImGui::Checkbox("bordes", &sgui.activar_bordes)) {
+            shader::usar("deferred");
+            shader::uniform("activar_bordes", sgui.activar_bordes ? 1.f : 0.f);
+        }
+        if (ImGui::Checkbox("toon shading", &sgui.activar_toon)) {
+            shader::usar("deferred");
+            shader::uniform("activar_toon", sgui.activar_toon ? 1.f : 0.f);
+        }
+
         
         ImGui::End();
     }
@@ -122,13 +152,7 @@ inline void solar_gui() {
                 }
                 ImGui::EndCombo();
             }
-        }
-
-        // Culling, desactivar si no está en modo camara libre
-        ImGui::BeginDisabled(cam::modo != cam::CAMARA_LIBRE);
-        if (ImGui::Checkbox("Culling", &culling) and not culling)
-            desactivarCulling();
-        ImGui::EndDisabled();
+        } 
     
         ImGui::End();
     }

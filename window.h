@@ -18,7 +18,9 @@ namespace tofu
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, true);
+        #ifdef USE_MULTISAMPLING
         glfwWindowHint(GLFW_SAMPLES, 4);
+        #endif
 
         // Crear la ventana							
         GLFWwindow* win = glfwCreateWindow(w, h, nombre.c_str(), NULL, NULL);
@@ -60,7 +62,22 @@ namespace tofu
         // Guardamos el tamaño de la ventana
         // El tamaño del framebuffer principal (usado para glViewport) puede ser diferente al tamaño de la ventana
         // Por ejemplo, al trabajar con pantallas HiDPI. Por eso utilzamos una función específica de glfw para guardarlo por separado
+        glm::ivec2 tam_ant = gl.tam_win, tam_fb_ant = gl.tam_fb;
         gl.tam_win = {w, h};
         glfwGetFramebufferSize(win, &gl.tam_fb.x, &gl.tam_fb.y);
+
+        // Redimensionar framebuffer
+        for (auto &[id, fb] : gl.framebuffers) {
+            if (fb.tam.x == tam_ant.x and fb.tam.y == tam_ant.y)
+                framebuffer::redimensionar(id, gl.tam_win);
+            else if (fb.tam.x == tam_fb_ant.x and fb.tam.y == tam_fb_ant.y)
+                framebuffer::redimensionar(id, gl.tam_fb);
+        }
+
+        // Actualizar el tamaño de la ventana en la shader deferred
+        if (gl.shaders.count("deferred")) {
+            shader::usar("deferred");
+            shader::uniform("tam_win", glm::vec2(gl.tam_win));
+        }
     }
 }
