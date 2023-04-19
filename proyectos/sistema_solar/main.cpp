@@ -3,7 +3,7 @@
 
 // Opciones
 #define DEBUG
-//#define ORBITAS_ELIPTICAS
+#define ORBITAS_ELIPTICAS
 //#define USE_MULTISAMPLING
 //#define USE_RETINA_FB
 
@@ -324,6 +324,7 @@ int main(int arcg, char** argv) {
 
 // TODO:
 // - Mapas de terreno
+// - Shader por cada objeto
 // - Ruído perlin, múltiples niveles
 // - Cráteres
 // - Triplanar mapping para texturas y normales
