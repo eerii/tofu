@@ -27,7 +27,7 @@ inline std::map<str, Planeta> planetas = {
     { "Marte",      { 0.7f, 20.f, {1.0f, 0.0f, 0.4f},         "", 0.08f } },
     { "Deimos",     {0.15f,  2.f, {0.2f, 0.3f, 0.4f},    "Marte", 0.0f } },
     { "Fobos",      { 0.1f, 2.5f, {0.4f, 0.3f, 0.2f},    "Marte", 0.0f } },
-    { "Júpiter",    { 1.5f, 40.f, {1.0f, 0.6f, 0.3f},         "", 0.9f } },
+    { "Júpiter",    { 1.5f, 40.f, {1.0f, 0.6f, 0.3f},         "", 0.09f } },
     { "Io",         {0.15f, 2.5f, {1.0f, 0.8f, 0.7f},  "Júpiter", 0.0f } },
     { "Europa",     {0.12f,  3.f, {1.0f, 0.5f, 0.7f},  "Júpiter", 0.0f } },
     { "Ganímedes",  { 0.3f,  4.f, {0.8f, 0.8f, 0.9f},  "Júpiter", 0.0f } },

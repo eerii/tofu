@@ -20,6 +20,7 @@ LIB=$(ROOT_DIR)/lib
 INCLUDES= \
 	-I. \
 	-I$(ROOT_DIR) \
+	-I$(LIB)/ \
 	-I$(LIB)/imgui \
 	-I$(LIB)/imgui/backends \
 	-I$(LIB)/imguizmo/imGuIZMO.quat
@@ -43,6 +44,9 @@ SOURCE_FILES=$(SRC)/main.cpp
 
 # Archivos objecto (.o)
 OBJECT_FILES=$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCE_FILES))
+
+# Assets
+ASSETS=shaders texturas
 
 # Ejecutable
 EXECUTABLE_FILES=$(BIN)/$(EXECUTABLE_NAME)
@@ -79,7 +83,13 @@ LDFLAGS:=$(LDFLAGS) -limgui
 # TODO: Copiar recursos (shaders, texturas, etc...)
 
 # Build
-build: $(EXECUTABLE_FILES)
+build: $(EXECUTABLE_FILES) assets
+
+# Copiar assets
+assets: $(ASSETS)
+	@echo "copiando shaders"
+	@rm -rf $(patsubst %, $(BIN)/%, $(ASSETS))
+	@cp -r $(ASSETS) $(BIN)
 
 # Emscripten (web)
 web: $(SRC)/main.cpp $(HEADER_FILES)

@@ -4,6 +4,7 @@
 #include <numeric>
 
 #include "debug.h"
+#include "stb_image.h"
 
 namespace tofu
 {
@@ -236,6 +237,31 @@ namespace tofu
             }
 
             return tipo;
+        }
+
+        // Cargar una imágen a una textura
+        inline ui32 cargar(str imagen) {
+            // Cargar la imágen a memoria
+            int w, h, ch;
+            stbi_set_flip_vertically_on_load(true);
+            ui8* data = stbi_load(imagen.c_str(), &w, &h, &ch, 0);
+            if (!data) {
+                log::error("No se pudo cargar la textura {}", imagen);
+                std::exit(-1);
+            }
+
+            // Creamos la textura
+            ui32 tex_id = crear(GL_TEXTURE_2D, GL_RGBA32UI, 0, 0, glm::ivec2(w, h));
+            Textura& tex = gl.texturas[tex_id];
+
+            // Añadir la imagen a la textura
+            tex.tam = glm::ivec2(w, h);
+            glBindTexture(tex.target, tex.textura);
+            glTexImage2D(tex.target, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            debug::gl();
+
+            stbi_image_free(data);
+            return tex_id;
         }
     }
 

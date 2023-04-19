@@ -3,7 +3,8 @@
 
 // Opciones
 #define DEBUG
-#define ORBITAS_ELIPTICAS
+#define STB_IMAGE_IMPLEMENTATION
+//#define ORBITAS_ELIPTICAS
 //#define USE_MULTISAMPLING
 //#define USE_RETINA_FB
 
@@ -311,6 +312,10 @@ int main(int arcg, char** argv) {
     // Creamos queries
     glGenQueries(1, &tf_query);
     debug::gl();
+
+    // TODO: ELIMINAR
+    // PRUEBA TEXTURAS
+    ui32 tex = textura::cargar("texturas/prueba.png");
 
 	// Llamamos al bucle principal de la aplicación
     // Devuelve false cuando se cierra la ventana

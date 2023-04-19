@@ -1,0 +1,12 @@
+{
+    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+    "makefile.makefilePath": "proyectos/sistema_solar/makefile",
+    "makefile.makeDirectory": "proyectos/sistema_solar",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Programacion/OpenGL/tofu/proyectos/sistema_solar/bin",
+            "binaryPath": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Programacion/OpenGL/tofu/proyectos/sistema_solar/bin/main",
+            "binaryArgs": []
+        }
+    ]
+}

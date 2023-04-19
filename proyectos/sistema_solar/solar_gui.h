@@ -31,7 +31,7 @@ inline struct SolarGui {
 
     bool activar_luz = true;
     bool activar_bordes = true;
-    bool activar_toon = true;
+    bool activar_toon = false;
 } sgui;
 #endif
 
