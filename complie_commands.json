@@ -1,0 +1,26 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-g",
+      "--std=c++17",
+      "-I.",
+      "-I../..",
+      "-I../../lib/",
+      "-I../../lib/imgui",
+      "-I../../lib/imgui/backends",
+      "-I../../lib/imguizmo/imGuIZMO.quat",
+      "-I../../lib/glad",
+      "-I../../lib/glm",
+      "-I../../lib/glfw/include",
+      "-I../../lib/glfw/include/GLFW",
+      "-c",
+      "-o",
+      "bin/obj/main.o",
+      "main.cpp"
+    ],
+    "directory": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Programacion/OpenGL/tofu/proyectos/sistema_solar",
+    "file": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Programacion/OpenGL/tofu/proyectos/sistema_solar/main.cpp",
+    "output": "/Users/jose/Library/Mobile Documents/com~apple~CloudDocs/Programacion/OpenGL/tofu/proyectos/sistema_solar/bin/obj/main.o"
+  }
+]

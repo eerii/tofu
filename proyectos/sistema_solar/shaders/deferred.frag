@@ -89,7 +89,7 @@ void main() {
     float i = iluminacion(n.xyz, p.xyz, p.a);
     if (activar_toon > 0.5)
         i = (floor(i * num_colores) + 0.3) / num_colores;
-    c.rgb = hsv_to_rgb(vec3(hsv.r, saturacion, i));
+    c.rgb = hsv_to_rgb(vec3(hsv.r, saturacion, i * (hsv.b * 0.5 + 0.5)));
 
     // Detección de ejes
     if (activar_bordes > 0.5) {
@@ -107,7 +107,7 @@ void main() {
         if (c.a != 0)
             cmix = min(c.rgb, 1.0 - vec3(borde));
         else
-            cmix = vec3(borde) * vec3(1.0, 0.9, 0.8);
+            cmix = vec3(borde) * vec3(1.0, 0.9, 0.5);
 
         color_out = vec4(cmix, 1.0);
     } else {

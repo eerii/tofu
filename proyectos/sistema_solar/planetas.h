@@ -6,6 +6,19 @@ using namespace tofu;
 
 // ---
 
+struct Material {
+    str albedo;
+};
+
+inline std::map<str, Material> materiales = {
+    { "PlanetaGas", { "texturas/planeta_gas.png" } },
+    { "PlanetaRocoso", { "texturas/planeta_rocoso.png" } },
+    { "Tierra", { "texturas/tierra.png" } },
+    { "Luna", { "texturas/luna.png" } },
+    { "Asteroide", { "texturas/asteroide.png" } },
+    { "Sol", { "texturas/sol.png" } },
+};
+
 // Planetas
 // Estructura con todos los datos necesarios para dibujar un planeta
 // Notamos que no incluye las matrices de modelo, y es porque estas se calculan y almacenan directamente en buffers de la GPU
@@ -16,26 +29,27 @@ struct Planeta {
     glm::vec3 color;
     str orbita;
     float excentricidad;
+    str mat;
 };
 
 inline std::map<str, Planeta> planetas = {
-    { "Sol",        {  3.f,  0.f, {1.0f, 0.9f, 0.8f},         "", 0.0f } },
-    { "Mercurio",   { 0.5f, 10.f, {0.5f, 0.5f, 0.5f},         "", 0.1f } },
-    { "Venus",      { 0.8f, 13.f, {1.0f, 0.4f, 0.0f},         "", 0.12f } },
-    { "Tierra",     { 1.0f, 17.f, {0.2f, 0.4f, 1.0f},         "", 0.1f } },
-    { "Luna",       { 0.2f,  2.f, {0.6f, 0.6f, 0.6f},   "Tierra", 0.0f } },
-    { "Marte",      { 0.7f, 20.f, {1.0f, 0.0f, 0.4f},         "", 0.08f } },
-    { "Deimos",     {0.15f,  2.f, {0.2f, 0.3f, 0.4f},    "Marte", 0.0f } },
-    { "Fobos",      { 0.1f, 2.5f, {0.4f, 0.3f, 0.2f},    "Marte", 0.0f } },
-    { "Júpiter",    { 1.5f, 40.f, {1.0f, 0.6f, 0.3f},         "", 0.09f } },
-    { "Io",         {0.15f, 2.5f, {1.0f, 0.8f, 0.7f},  "Júpiter", 0.0f } },
-    { "Europa",     {0.12f,  3.f, {1.0f, 0.5f, 0.7f},  "Júpiter", 0.0f } },
-    { "Ganímedes",  { 0.3f,  4.f, {0.8f, 0.8f, 0.9f},  "Júpiter", 0.0f } },
-    { "Calisto",    { 0.2f, 4.5f, {0.8f, 0.7f, 1.0f},  "Júpiter", 0.0f } },
-    { "Saturno",    { 1.3f, 45.f, {1.0f, 0.8f, 0.5f},         "", 0.11f } },
-    { "Urano",      { 1.1f, 55.f, {0.4f, 0.9f, 1.0f},         "", 0.13f } },
-    { "Neptuno",    { 1.0f, 60.f, {0.3f, 0.5f, 1.0f},         "", 0.15f } },
-    { "Plutón",     { 0.3f, 70.f, {0.3f, 0.3f, 0.3f},         "", 0.12f } },
+    { "Sol",        {  3.f,  0.f, {1.0f, 0.9f, 0.8f},         "", 0.0f , "Sol" } },
+    { "Mercurio",   { 0.5f, 10.f, {0.5f, 0.5f, 0.5f},         "", 0.3f , "PlanetaRocoso" } },
+    { "Venus",      { 0.8f, 13.f, {1.0f, 0.4f, 0.0f},         "", 0.3f , "PlanetaRocoso" } },
+    { "Tierra",     { 1.0f, 17.f, {0.2f, 0.4f, 1.0f},         "", 0.3f , "Tierra" } },
+    { "Luna",       { 0.2f,  2.f, {0.6f, 0.6f, 0.6f},   "Tierra", 0.0f , "Luna" } },
+    { "Marte",      { 0.7f, 20.f, {1.0f, 0.0f, 0.4f},         "", 0.3f , "PlanetaRocoso" } },
+    { "Deimos",     {0.15f,  2.f, {0.2f, 0.3f, 0.4f},    "Marte", 0.0f , "Asteroide" } },
+    { "Fobos",      { 0.1f, 2.5f, {0.4f, 0.3f, 0.2f},    "Marte", 0.0f , "Asteroide" } },
+    { "Júpiter",    { 1.5f, 40.f, {1.0f, 0.6f, 0.3f},         "", 0.3f , "PlanetaGas" } },
+    { "Io",         {0.15f, 2.5f, {1.0f, 0.8f, 0.7f},  "Júpiter", 0.0f , "Asteroide" } },
+    { "Europa",     {0.12f,  3.f, {1.0f, 0.5f, 0.7f},  "Júpiter", 0.0f , "Asteroide" } },
+    { "Ganímedes",  { 0.3f,  4.f, {0.8f, 0.8f, 0.9f},  "Júpiter", 0.0f , "Asteroide" } },
+    { "Calisto",    { 0.2f, 4.5f, {0.8f, 0.7f, 1.0f},  "Júpiter", 0.0f , "Asteroide" } },
+    { "Saturno",    { 1.3f, 45.f, {1.0f, 0.8f, 0.5f},         "", 0.3f , "PlanetaGas" } },
+    { "Urano",      { 1.1f, 55.f, {0.4f, 0.9f, 1.0f},         "", 0.3f , "PlanetaGas" } },
+    { "Neptuno",    { 1.0f, 60.f, {0.3f, 0.5f, 1.0f},         "", 0.3f , "PlanetaGas" } },
+    { "Plutón",     { 0.3f, 70.f, {0.3f, 0.3f, 0.3f},         "", 0.3f , "PlanetaRocoso" } },
 };
 const ui32 num_planetas = planetas.size();
 const ui32 num_asteroides = 1000;

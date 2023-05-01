@@ -8,11 +8,14 @@ uniform float activar_luz;
 
 uniform samplerBuffer bmodelos;
 uniform samplerBuffer bcolor;
+uniform samplerBuffer bmateriales;
 
-out vec3 color;
+out vec3 pos;
+out vec4 color;
 out vec3 normal;
 out vec4 frag_pos;
 out float iluminar;
+out float mat;
 
 // ---
 
@@ -62,7 +65,7 @@ void main() {
     m[0][3] = 0.0;
 
     // Outputs
-    color = texelFetch(bcolor, id).rgb;
+    color = texelFetch(bcolor, id);
     normal = mat3(transpose(inverse(m))) * in_pos;
     iluminar = float(m[3][0] != 0.0 || m[3][2] != 0.0);
 
@@ -72,6 +75,7 @@ void main() {
         disp = perlin(in_pos.xy, 4.0 / ceil(m[1][1] * 4.0), 0.0) * 0.1 + 0.9;
     frag_pos = m * vec4(in_pos * disp, 1.0);
     gl_Position = viewproj * frag_pos;
+    pos = in_pos * 0.5 + 0.5;
 
     iluminar *= activar_luz;
 }

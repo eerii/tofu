@@ -6,8 +6,10 @@
 #include <cmath>
 #include <vector>
 #include <cstdint>
+#include <string>
 
 using ui32 = std::uint32_t;
+using str = std::string;
 
 struct v2 {
     std::array<float, 2> v;
@@ -76,26 +78,28 @@ struct PiezaGrua {
     v3 pos_rel;
     v3 escala;
     v3 color;
-    float angulo;
+    float angulo = 0.f;
+    str textura;
 
-    PiezaGrua(v3 p_pos_rel, v3 p_escala, v3 p_color, int p_padre = -1, PosicionamientoRelativo p_rel = POS_CENTRO, float p_angulo = 0.f)
-        : pos_rel(p_pos_rel), escala(p_escala), color(p_color), padre(p_padre), rel(p_rel), angulo(p_angulo) {
+    PiezaGrua(v3 p_pos_rel, v3 p_escala, v3 p_color, int p_padre = -1, PosicionamientoRelativo p_rel = POS_CENTRO, str p_textura = "")
+        : pos_rel(p_pos_rel), escala(p_escala), color(p_color), padre(p_padre), rel(p_rel), textura(p_textura) {
         static int count = 0;
         id = count++;
     }
 };
 
 enum PiezasImportantes {
-    PIEZA_BASE = 1,
-    PIEZA_TORRE = 6,
-    PIEZA_BRAZO = 7,
-    PIEZA_CABLE = 8
+    PIEZA_BASE = 2,
+    PIEZA_TORRE = 7,
+    PIEZA_BRAZO = 8,
+    PIEZA_CABLE = 9
 };
 
 // Lista de piezas de la grua
 // Tienen que estar ordenadas por su dependencia de padres
 inline std::vector<PiezaGrua> piezas_grua = {
-    { {0.f, 0.f, 0.f}, {60.f, 1.f, 60.f}, {0.3f, 0.2f, 0.5f} }, // Suelo
+    { {0.f, 0.f, 0.f}, {4.f, 1.f, 4.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "suelo.png" }, // Suelo
+    { {0.f, -1.f, 32.f}, {8.f, 1.f, 8.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "piscina.png" }, // Piscina
     { {0.f, -2.f, 0.f}, {3.f, 0.5f, 4.f}, {1.f, 1.f, 0.5f} }, // Base
     { {-2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco izquierdo
     { {2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco derecho
@@ -235,4 +239,3 @@ inline void controlarGrua() {
     if (piezas_grua[PIEZA_CABLE].escala.y() - piezas_grua[PIEZA_TORRE].escala.y() > 0.f)
         piezas_grua[PIEZA_CABLE].escala.y() = piezas_grua[PIEZA_TORRE].escala.y();
 }
-

@@ -240,7 +240,7 @@ namespace tofu
         }
 
         // Cargar una imágen a una textura
-        inline ui32 cargar(str imagen) {
+        inline void cargar(str imagen) {
             // Cargar la imágen a memoria
             int w, h, ch;
             stbi_set_flip_vertically_on_load(true);
@@ -253,15 +253,63 @@ namespace tofu
             // Creamos la textura
             ui32 tex_id = crear(GL_TEXTURE_2D, GL_RGBA32UI, 0, 0, glm::ivec2(w, h));
             Textura& tex = gl.texturas[tex_id];
+            gl.imagenes[imagen] = tex_id;
 
             // Añadir la imagen a la textura
-            tex.tam = glm::ivec2(w, h);
             glBindTexture(tex.target, tex.textura);
             glTexImage2D(tex.target, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
             debug::gl();
 
             stbi_image_free(data);
-            return tex_id;
+        }
+
+        namespace detail
+        {
+            inline str hash_str(const std::vector<str>& v) {
+                str hash = "";
+                for (auto i : v)
+                    hash += i + ";";
+                return hash;
+            }
+        }
+
+        inline str cargar(std::vector<str> imagenes) {
+            // Cargar la imágen a memoria
+            int w, h, ch;
+            stbi_set_flip_vertically_on_load(true);
+            std::vector<ui8*> datos;
+            
+            for (auto i : imagenes) {
+                ui8* d = stbi_load(i.c_str(), &w, &h, &ch, 4);
+                if (!d) {
+                    log::error("No se pudo cargar la textura {}", i);
+                    std::exit(-1);
+                }
+                datos.push_back(d);
+            }
+
+            // Creamos la textura
+            ui32 tex_id = crear(GL_TEXTURE_2D_ARRAY, GL_RGBA8, 0, 0, glm::ivec2(w, h));
+            Textura& tex = gl.texturas[tex_id];
+            gl.imagenes[detail::hash_str(imagenes)] = tex_id;
+
+            // Añadir la imagen a la textura
+            glBindTexture(tex.target, tex.textura);
+            glTexImage3D(tex.target, 0, GL_RGBA, w, h, datos.size(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            for (int i = 0; i < datos.size(); i++)
+                glTexSubImage3D(tex.target, 0, 0, 0, i, w, h, 1, GL_RGBA, GL_UNSIGNED_BYTE, datos[i]);
+
+            glTexParameteri(tex.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(tex.target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexParameteri(tex.target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(tex.target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+            debug::gl();
+
+            for (auto d : datos)
+                stbi_image_free(d);
+
+            return detail::hash_str(imagenes);
         }
     }
 

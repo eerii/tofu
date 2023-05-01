@@ -4,7 +4,7 @@
 // Opciones
 #define DEBUG
 #define STB_IMAGE_IMPLEMENTATION
-//#define ORBITAS_ELIPTICAS
+#define ORBITAS_ELIPTICAS
 //#define USE_MULTISAMPLING
 //#define USE_RETINA_FB
 
@@ -61,12 +61,28 @@ const std::vector<ui32> color_att_dibujo = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTA
 // · UTILIDADES PLANETAS ·
 // ·······················
 
+void crearMateriales() {
+    // Estructura de materiales para la gpu:
+    // 0 - albedo
+    
+    std::vector<str> albedo;
+    for (const auto &[n, m] : materiales)
+        albedo.push_back(m.albedo);
+
+    ui32 alb_tex = gl.texturas[gl.imagenes[textura::cargar(albedo)]].textura;
+
+    shader::usar("planetas");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, alb_tex);
+    shader::uniform("albedo", 0);
+}
+
 void iniciarDatosPlanetas() {
     // Estructura preparada para la gpu:
     // 0 - radio
     // 1 - distancia
     // 2 - indice del padre
-    // 3 - excentricidad órbita
+    // 3 - excentricidad
     std::vector<glm::vec4> planetas_gpu;
 
     #ifndef ORBITAS_ELIPTICAS
@@ -87,6 +103,7 @@ void iniciarDatosPlanetas() {
             }
             padre = (float)std::distance(planetas.begin(), it);
         }
+
         // Añadimos el planeta a la lista
         planetas_gpu.push_back({ p.radio, p.distancia, padre, p.excentricidad });
         i++;
@@ -95,7 +112,14 @@ void iniciarDatosPlanetas() {
     // Colores de los planetas
     std::vector<glm::vec4> color;
     std::transform(planetas.begin(), planetas.end(), std::back_inserter(color), [](auto &pl) {
-        return glm::vec4(pl.second.color, 0.f);
+        auto it = materiales.find(pl.second.mat);
+        if (it == materiales.end()) {
+            log::error("Planeta {} tiene como material a {} que no existe", pl.first, pl.second.mat);
+            std::exit(-1);
+        }
+        float mat = (float)std::distance(materiales.begin(), it);
+
+        return glm::vec4(pl.second.color, mat);
     });
 
     // Órbitas de los planetas
@@ -114,7 +138,7 @@ void iniciarDatosPlanetas() {
         float radio = (std::rand() % 100 / 100.f) * 0.1f + 0.1f;
         float distancia = (std::rand() % 100 / 100.f) * 4.f + 29.f;
         #ifdef ORBITAS_ELIPTICAS
-        float exc = (std::rand() % 100 / 100.f) * 0.04f + 0.08f;
+        float exc = (std::rand() % 100 / 100.f) * 0.09f + 0.25f;
         #else
         float exc = 0.f;
         #endif
@@ -189,23 +213,19 @@ void render() {
     shader::usar("planetas");
     shader::uniform("viewproj", viewproj); 
     glDrawBuffers(color_att_dibujo.size(), color_att_dibujo.data());
-    gl.instancia_base = 0;
-    DIBUJAR_SI(planetas, cull_planetas, esfera20) // Planetas
-    gl.instancia_base = num_planetas;
-    DIBUJAR_SI(asteroides, cull_asteroides, esfera5) // Asteroides (modelo con menos resolucion) 
+    DIBUJAR_SI(planetas, cull_planetas, num_planetas, esfera20) // Planetas
+    DIBUJAR_SI(asteroides, cull_asteroides, num_asteroides, esfera5) // Asteroides (modelo con menos resolucion) 
 
     // Orbitas
     shader::usar("orbitas");
     shader::uniform("viewproj", viewproj);
-    gl.instancia_base = num_planetas + num_asteroides;
-    DIBUJAR_SI(orbitas, num_planetas, circulo)
+    DIBUJAR_SI(orbitas, num_planetas, num_planetas, circulo)
 
     // Estrellas
     shader::usar("estrellas");
     shader::uniform("time", tiempo);
     shader::uniform("viewproj", viewproj);
-    gl.instancia_base = 2*num_planetas + num_asteroides;
-    DIBUJAR_SI(estrellas, cull_estrellas, cubo)
+    DIBUJAR_SI(estrellas, cull_estrellas, num_estrellas, cubo)
 
     // Dibujo en diferido
     // Tomamos el framebuffer fbo_dibujo y lo mostramos en pantalla
@@ -225,7 +245,7 @@ void render() {
     shader::usar("calc_modelos");
     shader::uniform("time", tiempo);
     shader::uniform("viewproj", viewproj);
-    shader::uniform("culling", (int)culling);
+    shader::uniform("culling", 0);
     cull_planetas = transformFeedback(0, num_planetas, gl.buffers[buf_modelos.b]);
     cull_asteroides = transformFeedback(num_planetas, num_asteroides, gl.buffers[buf_modelos.b]);
 
@@ -288,8 +308,8 @@ int main(int arcg, char** argv) {
     shader::uniform("pos", (int)framebuffer::fb_offset + 2);
     shader::uniform("depth", (int)framebuffer::fb_offset + 3);
     shader::uniform("tam_win", glm::vec2(gl.tam_win));
-    shader::uniform("activar_bordes", 1.f);
-    shader::uniform("activar_toon", 1.f); 
+    shader::uniform("activar_bordes", 0.f);
+    shader::uniform("activar_toon", 0.f); 
 
     // Cargamos en memoria las figuras a dibujar
     // Se añaden automáticamente al VBO/EBO y guardamos la información de indexado
@@ -307,15 +327,12 @@ int main(int arcg, char** argv) {
     // Crear planetas
     // Construímos los planetas y asteroides, unos a partir de las constantes que indicamos y otros por variables aleatorias
     // Luego llamamos a iniciarDatosPlanetas para cargar estos datos en la GPU
-    iniciarDatosPlanetas();
+    crearMateriales();
+    iniciarDatosPlanetas(); 
 
     // Creamos queries
     glGenQueries(1, &tf_query);
     debug::gl();
-
-    // TODO: ELIMINAR
-    // PRUEBA TEXTURAS
-    ui32 tex = textura::cargar("texturas/prueba.png");
 
 	// Llamamos al bucle principal de la aplicación
     // Devuelve false cuando se cierra la ventana

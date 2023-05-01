@@ -10,6 +10,7 @@ uniform samplerBuffer bplanetas;
 out mat4 modelo;
 out int visible;
 out float id;
+out float mat;
 
 #define MAX_REC 4
 

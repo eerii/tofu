@@ -8,9 +8,9 @@ using namespace tofu;
 #include "camara.h"
 
 #ifndef DISABLE_GUI
-    #define DIBUJAR_SI(nombre, num, shader) \
+    #define DIBUJAR_SI(nombre, num, num_base, shader) \
         if (sgui.dibujar[#nombre]) { dibujar(num, #shader); } \
-        else { gl.instancia_base += num; }
+        gl.instancia_base += num_base;
 #else
     #define DIBUJAR_SI(nombre, num, shader) dibujar(num, #shader);
 #endif
@@ -30,7 +30,7 @@ inline struct SolarGui {
     };
 
     bool activar_luz = true;
-    bool activar_bordes = true;
+    bool activar_bordes = false;
     bool activar_toon = false;
 } sgui;
 #endif

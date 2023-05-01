@@ -176,7 +176,7 @@ namespace tofu
             #endif
         }
 
-        gl.instancia_base += n;
+        //gl.instancia_base += n;
         debug::gl();
     }
 

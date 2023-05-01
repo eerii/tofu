@@ -136,6 +136,7 @@ namespace tofu
 
         std::unordered_map<ui32, Buffer> buffers;
         std::map<ui32, Textura> texturas;
+        std::unordered_map<str, ui32> imagenes;
         std::unordered_map<ui32, Framebuffer> framebuffers;
 
         glm::mat4 view;
