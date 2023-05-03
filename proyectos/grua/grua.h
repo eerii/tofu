@@ -89,24 +89,23 @@ struct PiezaGrua {
 };
 
 enum PiezasImportantes {
-    PIEZA_BASE = 2,
-    PIEZA_TORRE = 7,
-    PIEZA_BRAZO = 8,
-    PIEZA_CABLE = 9
+    PIEZA_BASE = 1,
+    PIEZA_TORRE = 6,
+    PIEZA_BRAZO = 7,
+    PIEZA_CABLE = 8
 };
 
 // Lista de piezas de la grua
 // Tienen que estar ordenadas por su dependencia de padres
 inline std::vector<PiezaGrua> piezas_grua = {
-    { {0.f, 0.f, 0.f}, {4.f, 1.f, 4.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "suelo.png" }, // Suelo
-    { {0.f, -1.f, 32.f}, {8.f, 1.f, 8.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "piscina.png" }, // Piscina
+    { {0.f, 0.f, 0.f}, {4.f, 1.f, 4.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "texturas/suelo.png" }, // Suelo
     { {0.f, -2.f, 0.f}, {3.f, 0.5f, 4.f}, {1.f, 1.f, 0.5f} }, // Base
     { {-2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco izquierdo
     { {2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco derecho
-    { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_IZQUIERDA }, // Pie izquierdo de la base
-    { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_DERECHA }, // Pie derecho de la base
-    { {0.f, 0.f, 0.f}, {1.f, 8.f, 1.f}, {0.5f, 0.5f, 1.f}, PIEZA_BASE, POS_ENCIMA }, // Torre central
-    { {-4.f, 0.f, 0.f}, {8.f, 1.f, 1.f}, {1.f, 0.5f, 0.5f}, PIEZA_TORRE, POS_ENCIMA }, // Brazo
+    { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_IZQUIERDA, "texturas/pie.png" }, // Pie izquierdo de la base
+    { {0.f, 0.f, 0.f}, {1.f, 1.f, 4.5f}, {0.7f, 1.f, 0.9f}, PIEZA_BASE, POS_DERECHA, "texturas/pie.png" }, // Pie derecho de la base
+    { {0.f, 0.f, 0.f}, {1.f, 8.f, 1.f}, {1.f, 1.f, 1.f}, PIEZA_BASE, POS_ENCIMA, "texturas/torre.png" }, // Torre central
+    { {-4.f, 0.f, 0.f}, {8.f, 1.f, 1.f}, {1.f, 1.f, 1.f}, PIEZA_TORRE, POS_ENCIMA, "texturas/brazo.png" }, // Brazo
     { {-7.f, 0.f, 0.f}, {0.1f, 6.f, 0.1f}, {1.f, 0.8f, 1.f}, PIEZA_BRAZO, POS_DEBAJO }, // Cable
     { {0.f, 0.f, 0.f}, {0.5f, 0.5f, 0.5f}, {1.f, 0.9f, 0.5f}, PIEZA_CABLE, POS_DEBAJO }, // Gancho
 };
@@ -115,7 +114,7 @@ inline std::vector<PiezaGrua> piezas_grua = {
 inline float vel_giro = 0.f, vel_movimiento = 0.f;
 
 const float acc_giro = 0.1f;
-const float acc_movimiento = 0.3f;
+const float acc_movimiento = -1.3f;
 const float max_vel_giro = 0.03f;
 const float max_vel_movimiento = 0.2f;
 const float decel = 0.93f;

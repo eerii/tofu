@@ -2,7 +2,7 @@
 // José Pazos Pérez
 
 // Opciones
-#define DEBUG
+//#define DEBUG
 #define STB_IMAGE_IMPLEMENTATION
 #define ORBITAS_ELIPTICAS
 //#define USE_MULTISAMPLING
@@ -343,12 +343,3 @@ int main(int arcg, char** argv) {
     terminarGL();
 	return 0;
 }
-
-// TODO:
-// - Mapas de terreno
-// - Shader por cada objeto
-// - Ruído perlin, múltiples niveles
-// - Cráteres
-// - Triplanar mapping para texturas y normales
-// - Atmósferas
-// - N body dynamics
