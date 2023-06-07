@@ -15,6 +15,9 @@
 #include "tofu.h"
 using namespace tofu;
 
+// Cámara libre
+#include "camara.h"
+
 // ---
 
 // ···········
@@ -34,6 +37,10 @@ const std::vector<ui32> atributos = {};
 // Matriz que combina gl.view y gl.proj para transformar los modelos
 glm::mat4 viewproj;
 
+// Escena
+inline int escena = 0;
+constexpr int MAX_ESCENAS = 4;
+
 // ---
 
 // ···················
@@ -47,9 +54,19 @@ void render() {
     shader::usar("raymarch");
     
     shader::uniform("time", (float)glfwGetTime());
+    shader::uniform("camera_pos", cam::pos);
+    shader::uniform("camera_rot", cam::rot);
+    shader::uniform("escena", (float)escena);
 
     glDrawArrays(GL_TRIANGLES, 0, 3);
     debug::gl();
+
+    // Actualizar cámara
+    camara();
+
+    // Cambiar escena con tab
+    if (gl.io.teclas[GLFW_KEY_TAB].presionada)
+        escena = (escena + 1) % MAX_ESCENAS;
 }
 
 // ---

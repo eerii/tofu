@@ -3,23 +3,18 @@
 in vec2 uv;
 
 uniform float time;
+uniform vec3 camera_pos;
+uniform mat4 camera_rot;
+uniform float escena;
 
 out vec4 color_out;
 
 // Constantes
 const float MIN_HIT_DISTANCE = 0.01;
-const float MAX_TRACE_DISTANCE = 50.0;
-
-// Materiales
-const vec3 materiales[4] = vec3[](
-    vec3(0.5, 0.9, 0.4),
-    vec3(0.8, 0.3, 0.9),
-    vec3(0.9, 0.4, 0.4),
-    vec3(0.3, 0.3, 0.8)
-);
+const float MAX_TRACE_DISTANCE = 10.0;
+const vec3 COLOR_CIELO = vec3(0.4, 0.4, 0.8);
 
 // Variables
-vec3 camera_pos = vec3(0., 0.0, -2.);
 vec3 luz_pos = vec3(2.0, 5.0, 2.0);
 
 // ---
@@ -44,54 +39,79 @@ float sdf_torus(vec3 p, vec3 c, vec2 t) {
   return length(q) - t.y;
 }
 // - Mandelbulb
-float sdf_mandelbulb(vec3 p, float power, float iterations) {
+float sdf_mandelbulb(vec3 p, float power, float iterations, float bailout, float scale) {
     vec3 z = p;
     float dr = 1.0;
     float r = 0.0;
-    
-    for (int i = 0; i < iterations; i++) {
+
+    for (int i = 0; i < iterations ; i++) {
         r = length(z);
+        if (r > bailout) break;
         
-        if (r > 2.0) break;
-        
-        // Convert to polar coordinates
+        // convert to polar coordinates
         float theta = acos(z.z / r);
         float phi = atan(z.y, z.x);
+        dr =  pow(r, power-1.0) * power * dr + 1.0;
         
-        dr = pow(r, power - 1.0) * power * dr + 1.0;
-        
-        // Scale and rotate the point
+        // scale and rotate the point
         float zr = pow(r, power);
         theta = theta * power;
         phi = phi * power;
         
-        // Convert back to cartesian coordinates
+        // convert back to cartesian coordinates
         z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
         z += p;
     }
-    
-    return 0.5 * log(r) * r / dr;
+    return (0.5 * log(r) * r / dr);
 }
-
-// ---
-// Escena
+// - Sierpinski tetraedro
+float sdf_sierpinski(vec3 p, float iterations, float scale, float offset) {
+    float r;
+    int n = 0;
+    while (n < int(iterations)) {
+        if (p.x + p.y < 0.0) p.xy = -p.yx; // fold 1
+        if (p.x + p.z < 0.0) p.xz = -p.zx; // fold 2
+        if (p.y + p.z < 0.0) p.zy = -p.yz; // fold 3
+        p = p * scale - offset * (scale - 1.0);
+        n++;
+    }
+    return (length(p)) * pow (scale, -float (n));
+}
 
 struct Object {
     float dist;
-    int material;
+    vec3 color;
 };
+
+// ---
+// Escena
 
 Object min_(Object a, Object b) {
     return (a.dist <= b.dist) ? a : b;
 }
 
-Object scene(vec3 p) {
-    /*Object s = Object(sdf_sphere(p, vec3(1.0, 0.3 * sin(time * 2.0), 1.3), 1.3), -1); // Sphere mirror
-    s = min_(s, Object(sdf_sphere(p, vec3(0.0, 0.3 + 0.1 * cos(time * 1.5), -0.5), 0.3), 1)); // Sphere
-    s = min_(s, Object(sdf_cube(p, vec3(2.0, 1.02, 0.1), vec3(0.3), 0.1), 2)); // Cube
-    s = min_(s, Object(sdf_plane(p, vec3(0.0, -1.0, 0.0), 1.5), 3)); // Ground*/
+Object smooth_min(Object a, Object b, float k) {
+    float h = clamp(0.5 + 0.5 * (b.dist - a.dist) / k, 0.0, 1.0);
+    return Object(mix(b.dist, a.dist, h) - k * h * (1.0 - h), mix(b.color, a.color, h));
+}
 
-    Object s = Object(sdf_mandelbulb(p, 8.0 + 2. * sin(time), 8.0), 0);
+Object scene(vec3 p) {
+    Object s = Object(1e20, vec3(0));
+    
+    if (escena < 0.5) {
+        s = min_(s, Object(sdf_sphere(p, vec3(0.0, 0.3 * sin(time * 2.0), 1.3), 1.3), vec3(-1))); // Sphere mirror
+        s = min_(s, Object(sdf_sphere(p, vec3(-1.0, 0.3 + 0.1 * cos(time * 1.5), -0.5), 0.3), vec3(0.8, 0.3, 0.9))); // Sphere
+        s = min_(s, Object(sdf_torus(p, vec3(1.0, 0.7, 0.0), vec2(0.4, 0.2)), vec3(0.9, 0.4, 0.4))); // Torus
+        s = min_(s, Object(sdf_plane(p, vec3(0.0, -1.0, 0.0), 1.5), vec3(0.3, 0.3, 0.8))); // Ground
+    } else if (escena < 1.5) {
+        s = min_(s, Object(sdf_sphere(p, vec3(sin(time) * 0.5 + 0.8, 0.0, 0.0), 1.0), vec3(0.5, 0.9, 0.4))); // Sphere
+        s = smooth_min(s, Object(sdf_cube(p, vec3(sin(-time) * 0.5 - 0.8, 0.0, 0.0), vec3(0.5), 0.0), vec3(-1)), 0.5); // Cube
+        s = min_(s, Object(sdf_plane(p, vec3(0.0, -1.0, 0.0), 1.5), vec3(0.9, 0.4, 0.4))); // Ground
+    } else if (escena < 2.5) {
+        s = min_(s, Object(sdf_mandelbulb(p, sin(time * 0.2) * 5.0 + 7.0, 15.0, 5.0, 2.0), vec3(0.5, 0.3, 0.8))); // Mandelbulb
+    } else {
+        s = min_(s, Object(sdf_sierpinski(p, 13.0 + sin(time) * 3.0, 2.0, sin(time) * 0.5 + 2.8), vec3(0.4, 0.4, 0.8))); // Sierpinski Tetraedro
+    }
     
     return s;
 }
@@ -122,13 +142,11 @@ float sombra(vec3 ray_origin, vec3 ray_dir, float k) {
     return res;
 }
 
-vec3 calculate_color(int material, vec3 pos, vec3 norm) {
-    vec3 color = materiales[material];
-    
+vec3 calculate_color(vec3 color, vec3 pos, vec3 norm) {
     // Luz difusa
     vec3 luz_dir = normalize(pos - luz_pos);
     vec3 luz_direccional = vec3(max(0.0, dot(norm, luz_dir)));
-    vec3 luz_ambiente = vec3(0.02);
+    vec3 luz_ambiente = vec3(0.1);
     
     color = max(color * (luz_direccional + luz_ambiente), luz_ambiente);
     
@@ -170,7 +188,7 @@ Object ray_march(vec3 ray_origin, vec3 ray_dir, int max_steps) {
         Object closest = scene(current_pos);
         
         if (closest.dist < MIN_HIT_DISTANCE) { // Hit!
-            return Object(trace_distance, closest.material);
+            return Object(trace_distance, closest.color);
         }
         
         if (trace_distance > MAX_TRACE_DISTANCE)
@@ -179,7 +197,7 @@ Object ray_march(vec3 ray_origin, vec3 ray_dir, int max_steps) {
         trace_distance += closest.dist;
     }
     
-    return Object(-1.0, 0); // Miss
+    return Object(-1.0, vec3(0)); // Miss
 }
 
 // ---
@@ -187,27 +205,27 @@ Object ray_march(vec3 ray_origin, vec3 ray_dir, int max_steps) {
 
 vec3 render(vec3 ray_origin, vec3 ray_dir) {
     vec3 color;
-    Object ray = ray_march(ray_origin, ray_dir, 256);
+    Object ray = ray_march(ray_origin, ray_dir, 128);
     
     if (ray.dist == -1.0) { // Cielo
-        color = vec3(0.4, 0.4, 0.8) - (ray_dir.y * 0.2);
+        color = COLOR_CIELO - (ray_dir.y * 0.2);
     } else { // Objeto
         vec3 pos = ray_origin + ray.dist * ray_dir;
         vec3 pos_normal = normal(pos);
         
         // Color
-        if (ray.material >= 0) {
-            color = calculate_color(ray.material, pos, pos_normal);
+        if (ray.color.r >= 0) {
+            color = calculate_color(ray.color, pos, pos_normal);
         } else {
             vec3 r_ray_origin = pos + pos_normal * 0.1;
-            Object r_ray = ray_march(r_ray_origin, pos_normal, 32);
+            Object r_ray = ray_march(r_ray_origin, pos_normal, 16);
             vec3 r_pos = r_ray_origin + r_ray.dist * pos_normal;
             vec3 r_norm = normal(r_pos);
             
             if (r_ray.dist == -1)
-                color = vec3(0.4, 0.4, 0.8) * 0.7 + color * 0.5;
+                color = COLOR_CIELO * 0.7 + color * 0.5;
             else
-                color = calculate_color(r_ray.material, r_pos, r_norm) * 0.7 + color * 0.5;
+                color = calculate_color(r_ray.color, r_pos, r_norm) * 0.7 + color * 0.5;
         }
     }
     
@@ -218,7 +236,7 @@ vec3 render(vec3 ray_origin, vec3 ray_dir) {
 
 void main() {
     vec3 ro = camera_pos;
-    vec3 rd = vec3(uv, 1.0);
+    vec3 rd = (vec4(uv, 1.0, 1.0) * camera_rot).xyz;
     
     color_out = vec4(render(ro, rd), 1.0);
 }
