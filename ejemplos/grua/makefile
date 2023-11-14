@@ -46,7 +46,7 @@ SOURCE_FILES=$(SRC)/main.cpp
 OBJECT_FILES=$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCE_FILES))
 
 # Assets
-ASSETS=shaders texturas
+ASSETS=shaders
 
 # Ejecutable
 EXECUTABLE_FILES=$(BIN)/$(EXECUTABLE_NAME)

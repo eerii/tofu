@@ -20,14 +20,23 @@ LIB=$(ROOT_DIR)/lib
 INCLUDES= \
 	-I. \
 	-I$(ROOT_DIR) \
-	-I$(LIB)/glad \
-	-I$(LIB)/glm \
-	-I$(LIB)/glfw/include \
-	-I$(LIB)/glfw/include/GLFW \
+	-I$(LIB)/ \
 	-I$(LIB)/imgui \
 	-I$(LIB)/imgui/backends \
 	-I$(LIB)/imguizmo/imGuIZMO.quat
 HEADER_FILES=$(wildcard ./*.h) $(wildcard $(ROOT_DIR)/*.h)
+
+# ifndef EMSCRIPTEN
+INCLUDES:=$(INCLUDES) \
+	-I$(LIB)/glad \
+	-I$(LIB)/glm \
+	-I$(LIB)/glfw/include \
+	-I$(LIB)/glfw/include/GLFW
+# else
+# 	INCLUDES:=$(INCLUDES) \
+# 			  -I$(EMSCRIPTEN)/system/include \
+# 			  -I$(EMSCRIPTEN)/system/include/GLFW
+# endif
 
 # Archivos fuente (.cpp)
 SRC=.
@@ -36,24 +45,29 @@ SOURCE_FILES=$(SRC)/main.cpp
 # Archivos objecto (.o)
 OBJECT_FILES=$(patsubst $(SRC)/%.cpp, $(OBJ)/%.o, $(SOURCE_FILES))
 
+# Assets
+ASSETS=shaders
+
 # Ejecutable
 EXECUTABLE_FILES=$(BIN)/$(EXECUTABLE_NAME)
 
 # Librerías (.a)
-GLAD_LIB=$(LIB_OUT)/libglad.a
-LDFLAGS:=$(LDFLAGS) -lglad
+# ifndef EMSCRIPTEN
+	GLAD_LIB=$(LIB_OUT)/libglad.a
+	LDFLAGS:=$(LDFLAGS) -lglad
 
-GLFW_LIB=$(LIB_OUT)/glfw/build/src/libglfw3.a
-GLFW_CMAKE_FLAGS=
-LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3
-ifeq ($(shell uname), Darwin)
-	LDFLAGS:=$(LDFLAGS) -framework Cocoa -framework IOKit -framework CoreVideo
-else ifeq ($(shell uname), Linux)
-	# ...	
-else
-	LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32 -static -lpthread
-	GLFW_CMAKE_FLAGS:=$(GLFW_CMAKE_FLAGS) -G Ninja
-endif
+	GLFW_LIB=$(LIB_OUT)/glfw/build/src/libglfw3.a
+	GLFW_CMAKE_FLAGS=
+	LDFLAGS:=$(LDFLAGS) -L$(LIB_OUT)/glfw/build/src -lglfw3
+	ifeq ($(shell uname), Darwin)
+		LDFLAGS:=$(LDFLAGS) -framework Cocoa -framework IOKit -framework CoreVideo
+	else ifeq ($(shell uname), Linux)
+		# ...	
+	else
+		LDFLAGS:=$(LDFLAGS) -lgdi32 -lopengl32 -static -lpthread
+		GLFW_CMAKE_FLAGS:=$(GLFW_CMAKE_FLAGS) -G Ninja
+	endif
+# endif
 
 IMGUI_LIB=$(LIB_OUT)/libimgui.a
 IMGUI_SOURCES=$(wildcard $(LIB)/imgui/*.cpp)
@@ -69,7 +83,19 @@ LDFLAGS:=$(LDFLAGS) -limgui
 # TODO: Copiar recursos (shaders, texturas, etc...)
 
 # Build
-build: $(EXECUTABLE_FILES)
+build: $(EXECUTABLE_FILES) assets
+
+# Copiar assets
+assets: $(ASSETS)
+	@echo "copiando shaders"
+	@rm -rf $(patsubst %, $(BIN)/%, $(ASSETS))
+	@cp -r $(ASSETS) $(BIN)
+
+# Emscripten (web)
+web: $(SRC)/main.cpp $(HEADER_FILES)
+	@echo "generando web"
+	@mkdir -p $(BIN)/web
+	em++ $(CFLAGS) $(INCLUDES) -c $< -o $(BIN)/web/index.html -s USE_GLFW=3 -s USE_WEBGL2=1 -s WASM=1
 
 # Clean
 clean:

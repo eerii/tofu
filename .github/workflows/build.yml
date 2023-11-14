@@ -11,13 +11,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest, ubuntu-latest]
-        project: [grua, sistema_solar]
+        os: [ubuntu-latest]
+        project: [grua, sistema_solar, raymarching]
   
     runs-on: ${{matrix.os}}
 
     env:
-      PROJ: proyectos/${{matrix.project}}
+      PROJ: ejemplos/${{matrix.project}}
 
     steps:
     - name: clone
@@ -31,14 +31,14 @@ jobs:
       
     - name: make
       run: |
-        cd proyectos/${{matrix.project}}
+        cd ejemplos/${{matrix.project}}
         make
 
     - name: bundle resources
       run: |
         mkdir -p bundle
-        cp proyectos/${{matrix.project}}/bin/main* bundle
-        cp -r proyectos/${{matrix.project}}/shaders bundle
+        cp ejemplos/${{matrix.project}}/bin/main* bundle
+        cp -r ejemplos/${{matrix.project}}/shaders bundle
 
     - name: store binary
       uses: actions/upload-artifact@v3

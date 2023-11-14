@@ -98,7 +98,7 @@ enum PiezasImportantes {
 // Lista de piezas de la grua
 // Tienen que estar ordenadas por su dependencia de padres
 inline std::vector<PiezaGrua> piezas_grua = {
-    { {0.f, 0.f, 0.f}, {4.f, 1.f, 4.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "texturas/suelo.png" }, // Suelo
+    { {0.f, 0.f, 0.f}, {40.f, 1.f, 40.f}, {1.f, 1.f, 1.f}, -1, POS_CENTRO, "texturas/suelo.png" }, // Suelo
     { {0.f, -2.f, 0.f}, {3.f, 0.5f, 4.f}, {1.f, 1.f, 0.5f} }, // Base
     { {-2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco izquierdo
     { {2.f, 0.f, -0.5f}, {0.35f, 0.35f, 0.35f}, {0.8f, 0.6f, 1.f}, PIEZA_BASE, POS_DELANTE }, // Foco derecho
@@ -172,9 +172,9 @@ inline void controlarGrua() {
     float dir_z = std::cos(piezas_grua[PIEZA_BASE].angulo);
 
     if (controles.delante)
-        vel_movimiento += acc_movimiento * DT;
-    if (controles.detras)
         vel_movimiento -= acc_movimiento * DT;
+    if (controles.detras)
+        vel_movimiento += acc_movimiento * DT;
     if (not controles.delante and not controles.detras)
         vel_movimiento *= decel;
 
